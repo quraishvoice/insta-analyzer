@@ -1,0 +1,2290 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="محلل انستا">
+<meta name="theme-color" content="#f4f3f0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<title>محلل انستجرام</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<script src="/theme.js"></script>
+<script src="/i18n-labels.js"></script>
+<script src="/profile.js"></script>
+<script src="/i18n.js"></script>
+<script src="/i18n/index.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f4f3f0;
+  --surface: #fcfcfb;
+  --surface-2: #f0efeb;
+  --border: #e3e1dc;
+  --text: #0b0b0b;
+  --text-2: #52514e;
+  --muted: #8a8984;
+  --accent: #2a78d6;
+  --accent-soft: #e3eefb;
+  --good: #1f7a3a;
+  --good-soft: #e3f3e7;
+  --bad: #b3261e;
+  --bad-soft: #fbe6e4;
+  --seq-0: #cde2fb; --seq-1: #9ec5f4; --seq-2: #6da7ec; --seq-3: #3987e5; --seq-4: #256abf; --seq-5: #184f95;
+  --grid: #e9e8e4;
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --border: #2f2f2c;
+    --text: #f0efec; --text-2: #c3c2b7; --muted: #8d8c85;
+    --accent: #3987e5; --accent-soft: #1d2d42;
+    --good: #5cc27a; --good-soft: #1b2e21; --bad: #ef7a72; --bad-soft: #3a1f1d;
+    --seq-0: #104281; --seq-1: #1c5cab; --seq-2: #2a78d6; --seq-3: #5598e7; --seq-4: #86b6ef; --seq-5: #b7d3f6;
+    --grid: #2a2a28; --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --border: #2f2f2c;
+  --text: #f0efec; --text-2: #c3c2b7; --muted: #8d8c85;
+  --accent: #3987e5; --accent-soft: #1d2d42;
+  --good: #5cc27a; --good-soft: #1b2e21; --bad: #ef7a72; --bad-soft: #3a1f1d;
+  --seq-0: #104281; --seq-1: #1c5cab; --seq-2: #2a78d6; --seq-3: #5598e7; --seq-4: #86b6ef; --seq-5: #b7d3f6;
+  --grid: #2a2a28; --shadow: none;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: "IBM Plex Sans Arabic", system-ui, sans-serif; font-size: 15px; line-height: 1.6; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px 64px; }
+
+header { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+.bar { max-width: 1240px; margin: 0 auto; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.brand { font-weight: 700; font-size: 17px; margin-inline-end: auto; display: flex; gap: 8px; align-items: center; }
+.brand svg { color: var(--accent); }
+select, input[type=date] { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 7px 10px; }
+.chips { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 3px; }
+.chips button { border: 0; background: none; padding: 5px 12px; border-radius: 7px; cursor: pointer; color: var(--text-2); }
+.chips button.on { background: var(--accent); color: #fff; }
+.btn { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 7px 14px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn:disabled { opacity: .55; cursor: wait; }
+.custom-range { display: none; gap: 6px; align-items: center; }
+.custom-range.show { display: flex; }
+
+.meta { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; color: var(--text-2); font-size: 13px; margin: 20px 0 14px; }
+.meta .who { display: flex; gap: 10px; align-items: center; color: var(--text); font-size: 15px; font-weight: 600; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-soft); display: grid; place-items: center; overflow: hidden; color: var(--accent); font-weight: 700; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.pill { background: var(--surface-2); padding: 2px 10px; border-radius: 99px; }
+.pill.warn { background: var(--bad-soft); color: var(--bad); }
+.pill.good { background: var(--good-soft); color: var(--good); }
+
+.grid { display: grid; gap: 14px; }
+.kpis { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); min-width: 0; }
+.kpi .label { color: var(--text-2); font-size: 13px; display: flex; gap: 4px; align-items: center; }
+.kpi .value { font-size: 26px; font-weight: 700; letter-spacing: -.01em; margin: 2px 0; font-variant-numeric: tabular-nums; }
+.delta { white-space: nowrap; font-size: 12.5px; display: inline-flex; gap: 3px; align-items: center; padding: 1px 8px; border-radius: 99px; }
+.delta.up { background: var(--good-soft); color: var(--good); }
+.delta.down { background: var(--bad-soft); color: var(--bad); }
+.delta.flat { background: var(--surface-2); color: var(--muted); }
+.kpi .prev { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.tip { cursor: help; color: var(--muted); font-size: 12px; border: 1px solid var(--border); border-radius: 50%; width: 16px; height: 16px; display: inline-grid; place-items: center; }
+
+h2 { font-size: 17px; margin: 34px 0 12px; display: flex; align-items: baseline; gap: 10px; }
+h2 small { font-weight: 400; color: var(--muted); font-size: 13px; }
+h3 { font-size: 15px; margin: 0 0 4px; }
+.sub { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+.two { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+.chart-box { position: relative; height: 240px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: start; color: var(--text-2); font-weight: 500; font-size: 12.5px; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+td { padding: 9px 8px; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; vertical-align: middle; }
+tr:last-child td { border-bottom: 0; }
+.scroll { overflow-x: auto; }
+.barcell { display: flex; align-items: center; gap: 8px; min-width: 120px; }
+.barcell i { display: block; height: 8px; border-radius: 4px 0 0 4px; background: var(--accent); }
+[dir="ltr"] .barcell i { border-radius: 0 4px 4px 0; }
+.badge { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+
+.heat { display: grid; grid-template-columns: 64px repeat(6, 1fr); gap: 3px; font-size: 12px; }
+.heat div { text-align: center; padding: 4px 0; color: var(--text-2); }
+.heat .cell { height: 38px; border-radius: 6px; display: grid; place-items: center; color: var(--text); font-weight: 600; padding: 0; cursor: default; }
+.heat .cell.empty { background: var(--surface-2); color: var(--muted); font-weight: 400; }
+.heat .cell.dark { color: #fff; }
+.legend-seq { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin-top: 10px; }
+.legend-seq span { width: 22px; height: 10px; border-radius: 3px; }
+.geo { position: relative; margin: 6px 0 14px; }
+.geo svg { display: block; width: 100%; height: auto; aspect-ratio: 1000 / 435; touch-action: manipulation; }
+.geo-views { width: fit-content; margin: 0 0 8px; font-size: 13px; }
+.geo .land path { fill: var(--surface-2); stroke: var(--surface); stroke-width: .6; vector-effect: non-scaling-stroke; stroke-linejoin: round; transition: fill .2s, filter .2s; }
+.geo .land path.has { cursor: pointer; }
+.geo .land path.on, .geo .dots circle.on { stroke: var(--text); stroke-width: 1.6; }
+.geo .dots circle { stroke: var(--surface); stroke-width: 1.2; vector-effect: non-scaling-stroke; cursor: pointer; }
+.geo .legend-seq { flex-wrap: wrap; }
+.geo .legend-seq .geo-none { background: var(--surface-2); margin-inline-start: 10px; }
+.geo-tip { position: absolute; z-index: 3; pointer-events: none; min-width: 150px; max-width: 240px; padding: 8px 12px; border-radius: 10px; font-size: 13px; line-height: 1.5;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border); box-shadow: 0 10px 28px rgba(0,0,0,.2); }
+
+.posts { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.post { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+.post .thumb { aspect-ratio: 4/5; background: var(--surface-2); position: relative; display: grid; place-items: center; color: var(--muted); }
+.post .thumb img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+.post .thumb .badge { position: absolute; top: 8px; inset-inline-start: 8px; background: rgba(0,0,0,.6); color: #fff; }
+.post .body { padding: 10px 12px 12px; font-size: 13px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.post .cap { color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.post .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; color: var(--text-2); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.post .stats b { color: var(--text); font-weight: 600; }
+.post .score { margin-top: auto; display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; padding-top: 6px; border-top: 1px solid var(--grid); }
+.post .verdict { font-size: 12.5px; background: var(--surface-2); border-radius: 8px; padding: 6px 8px; color: var(--text); }
+.post a { color: var(--accent); text-decoration: none; }
+.stories { grid-template-columns: repeat(auto-fill, minmax(125px, 1fr)); gap: 10px; }
+.stories .thumb { aspect-ratio: 3/4; }
+.stories .body { padding: 8px; }
+.stories .badge { font-size: 11px; }
+.badge.live { background: var(--accent); }
+.leads-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.leads-head .stats { display: flex; flex-wrap: wrap; gap: 6px; font-size: 13px; color: var(--text-2); }
+.leads td { vertical-align: top; }
+.aud-row { display: grid; grid-template-columns: minmax(64px, 120px) 1fr 52px; gap: 8px; align-items: center; font-size: 13.5px; margin: 7px 0; }
+.aud-row .v { text-align: end; font-variant-numeric: tabular-nums; }
+.aud-row .v small { display: block; color: var(--text-2); font-size: 11.5px; }
+.aud-bars i { display: block; height: 8px; border-radius: 4px; background: var(--seq-1); min-width: 2px; }
+.aud-bars i.e { background: var(--accent); margin-top: 3px; }
+.aud-key { display: flex; gap: 14px; font-size: 12.5px; color: var(--text-2); margin: 4px 0 6px; }
+.aud-key b { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-inline-end: 5px; vertical-align: -1px; }
+.leads .txt { max-width: 340px; color: var(--text); }
+.leads .done { color: var(--muted); }
+.leads .done .txt { color: var(--muted); }
+.auto-tag { font-size: 12px; margin-bottom: 4px; color: var(--good); }
+.auto-tag.bad { color: var(--bad, #c0392b); }
+#autoBody label.row { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+#autoBody .msg { white-space: pre-wrap; background: var(--surface-2); border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-top: 6px; }
+#autoBody .log { font-size: 13px; color: var(--text-2); margin: 6px 0 0; padding: 0 18px 0 0; }
+.alerts { display: grid; gap: 0; padding-block: 6px; }
+.alert-row { display: flex; gap: 12px; justify-content: space-between; align-items: start; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.alert-row:last-child { border-bottom: 0; }
+.alert-row .sub { margin: 2px 0 0; }
+@media (max-width: 640px) { .alert-row { flex-direction: column; gap: 4px; } }
+.plan { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.plan .day { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
+.plan .day.rest { background: transparent; border-style: dashed; color: var(--muted); }
+.plan .when { font-weight: 600; }
+.plan .when span { color: var(--text-2); font-weight: 400; font-size: 12.5px; display: block; }
+.plan .time { font-size: 20px; font-weight: 700; line-height: 1.2; }
+.plan .goal { align-self: flex-start; font-size: 12px; padding: 1px 9px; border-radius: 99px; background: var(--surface-2); color: var(--text-2); }
+.plan .goal.بيع, .plan .goal.Sell { background: var(--accent); color: #fff; }
+.plan .goal.إقناع, .plan .goal.Trust { background: var(--accent-soft); color: var(--accent); }
+.plan .hook { font-weight: 500; }
+.plan .why { color: var(--muted); font-size: 12px; }
+@media (max-width: 1000px) { .plan { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } .plan .day.rest { display: none; } }
+.cap-items { display: grid; gap: 8px; }
+.cap-item { display: flex; gap: 10px; align-items: flex-start; }
+.cap-item > span { width: 18px; text-align: center; font-weight: 700; flex-shrink: 0; }
+dialog select { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; }
+.reply-row td { background: var(--surface-2); }
+.reply-row textarea { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; resize: vertical; }
+.reply-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 6px; }
+.reply-actions .sub { margin-inline-end: auto; }
+.reply-actions input[type=number] { width: 120px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; }
+.stage { font-size: 12px; white-space: nowrap; }
+.stage.due { color: var(--bad); font-weight: 600; }
+.stage.won { color: var(--good); font-weight: 600; }
+.lead-acts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+tr.thin td { color: var(--muted); }
+.ideas-t .lead-acts { flex-wrap: nowrap; margin: 0; }
+.recycle .why { font-size: 13px; color: var(--text-2); margin: 6px 0 0; }
+.recycle .acts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; }
+.recycle .acts a { color: var(--accent); text-decoration: none; margin-inline-end: auto; font-size: 13px; }
+.goals-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.goal-row { padding: 12px 0; border-top: 1px solid var(--border); }
+.goal-row:first-of-type { border-top: 0; }
+.goal-top { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; justify-content: space-between; }
+.goal-top b { font-size: 15px; }
+.gbar { position: relative; height: 10px; border-radius: 99px; background: var(--surface-2); margin: 8px 0 6px; overflow: visible; }
+.gbar i { position: absolute; inset-block: 0; inset-inline-start: 0; border-radius: 99px; background: var(--accent); max-width: 100%; }
+[data-theme="dark"] .gbar i { background: var(--ig-grad, var(--accent)); }
+.gbar .mark { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--text-2); border-radius: 2px; }
+.gstat { font-size: 12.5px; padding: 1px 8px; border-radius: 99px; white-space: nowrap; }
+.gstat.done, .gstat.ahead { background: var(--good-soft); color: var(--good); }
+.gstat.close { background: var(--surface-2); color: var(--text-2); }
+.gstat.behind { background: var(--bad-soft); color: var(--bad); }
+.gstat.early { background: var(--surface-2); color: var(--muted); }
+.gstat.won { background: var(--good-soft); color: var(--good); }
+.gstat.lost { background: var(--bad-soft); color: var(--bad); }
+.gstat.same, .gstat.run { background: var(--surface-2); color: var(--text-2); }
+.exp { padding: 14px 0; border-top: 1px solid var(--border); }
+.exp:first-of-type { border-top: 0; padding-top: 4px; }
+.exp .acts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+.exp .nums { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 6px 0; font-size: 13px; color: var(--text-2); }
+.exp-sug { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin-top: 10px; }
+.exp-sug .card { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.exp-sug .card p { margin: 0; font-size: 13.5px; color: var(--text-2); flex: 1; }
+#expDlg input[type=text] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
+dialog input[type=number] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
+.lead-acts a.btn { color: inherit; text-decoration: none; }
+.btn.sm.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.sale-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: end; }
+.sale-form label { display: grid; gap: 4px; font-size: 12.5px; color: var(--text-2); }
+.sale-form input, .sale-form select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 7px 10px; color: var(--text); font: inherit; }
+.sale-form .wide { grid-column: span 2; }
+@media (max-width: 640px) { .sale-form .wide { grid-column: auto; } }
+.btn.sm { padding: 3px 10px; font-size: 12.5px; border-radius: 8px; }
+
+.advice { border: 1px solid var(--accent); background: linear-gradient(180deg, var(--accent-soft), var(--surface) 140px); }
+.advice p, .advice li { color: var(--text); }
+.advice h4 { margin: 20px 0 8px; font-size: 15px; display: flex; gap: 6px; align-items: center; }
+.advice ul { margin: 0; padding-inline-start: 20px; display: grid; gap: 6px; }
+.recs { display: grid; gap: 10px; }
+.rec { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.rec .p { font-size: 12px; padding: 1px 8px; border-radius: 99px; margin-inline-start: 6px; }
+.rec .p.h { background: var(--bad-soft); color: var(--bad); }
+.rec .p.m { background: var(--accent-soft); color: var(--accent); }
+.rec .p.l { background: var(--surface-2); color: var(--muted); }
+.ideas { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.idea .hook { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; margin: 8px 0; font-weight: 500; }
+.loading { display: flex; gap: 10px; align-items: center; color: var(--text-2); padding: 20px 0; }
+.spin { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: s 0.8s linear infinite; }
+@keyframes s { to { transform: rotate(360deg); } }
+.btn.danger { background: var(--bad); border-color: var(--bad); color: #fff; }
+.btn.danger:disabled { opacity: .4; cursor: default; }
+#delAccDlg input[type=text] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
+.err { background: var(--bad-soft); color: var(--bad); padding: 10px 14px; border-radius: 10px; margin: 10px 0; }
+
+.empty-state { max-width: 640px; margin: 60px auto; text-align: center; }
+.empty-state .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 24px; text-align: start; }
+
+dialog { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--text); padding: 22px; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; }
+dialog::backdrop { background: rgba(0,0,0,.4); }
+dialog label { display: block; font-weight: 500; margin: 14px 0 4px; }
+dialog textarea, dialog input[type=text] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
+dialog .hint { color: var(--muted); font-size: 12.5px; margin: 4px 0 0; }
+dialog .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+ol.steps { padding-inline-start: 20px; color: var(--text-2); font-size: 13.5px; }
+@media (max-width: 640px) { header { position: static; } .kpis { grid-template-columns: 1fr 1fr; gap: 10px; } .card { padding: 12px; } .kpi .value { font-size: 22px; } .heat { grid-template-columns: 44px repeat(6, 1fr); } }
+
+/* الجوال */
+.tools { display: contents; }
+.menu-btn, .secnav { display: none; }
+.ptr { position: fixed; top: calc(env(safe-area-inset-top) + 8px); left: 50%; translate: -50% -60px; z-index: 30; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,.15); transition: translate .2s, rotate .2s; pointer-events: none; }
+.ptr.ready { rotate: 180deg; }
+.ptr.go { animation: ptrspin .8s linear infinite; }
+@keyframes ptrspin { to { rotate: 360deg; } }
+@media (max-width: 640px) {
+  body { -webkit-text-size-adjust: 100%; }
+  header { padding-top: env(safe-area-inset-top); }
+  .bar { padding: 10px 12px; gap: 8px; }
+  .brand { order: 0; font-size: 0; gap: 0; margin-inline-end: 0; }
+  #account { order: 1; flex: 1; min-width: 0; }
+  .menu-btn { display: inline-flex; order: 2; padding: 7px 12px; }
+  #ranges { order: 3; width: 100%; }
+  #ranges button { flex: 1; padding: 6px 4px; }
+  .custom-range { order: 4; }
+  .tools { display: none; order: 5; width: 100%; }
+  header.open .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 4px; }
+  .tools .btn { justify-content: center; }
+  .tools .btn[hidden] { display: none; }
+  .secnav { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; position: sticky; top: 0; z-index: 9; padding: 8px 12px; padding-top: calc(env(safe-area-inset-top) + 8px); margin-top: calc(-1 * env(safe-area-inset-top)); background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+  .secnav::-webkit-scrollbar { display: none; }
+  .secnav a { flex: none; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); font-size: 13px; text-decoration: none; white-space: nowrap; }
+  .secnav a.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #app h2 { flex-direction: column; align-items: flex-start; gap: 2px; margin: 28px 0 10px; scroll-margin-top: calc(env(safe-area-inset-top) + 64px); }
+  .wrap { padding: 0 12px 48px; padding-bottom: calc(env(safe-area-inset-bottom) + 48px); }
+  .grid.posts { display: grid; grid-auto-flow: column; grid-auto-columns: 62%; grid-template-columns: none; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding-bottom: 6px; margin-inline: -12px; padding-inline: 12px; scroll-padding-inline: 12px; }
+  .grid.posts > * { scroll-snap-align: start; }
+  dialog { width: calc(100vw - 24px); max-width: none; max-height: calc(100dvh - 40px); }
+  table { font-size: 13px; }
+}
+</style>
+<link rel="stylesheet" href="/theme.css">
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><defs><linearGradient id="igGrad" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#fa7e1e"/><stop offset=".5" stop-color="#d62976"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient></defs><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
+      محلل انستجرام
+    </div>
+    <select id="account" aria-label="الحساب"></select>
+    <div class="chips" id="ranges">
+      <button data-days="7">٧ أيام</button>
+      <button data-days="30" class="on">٣٠ يوم</button>
+      <button data-days="90">٣ شهور</button>
+      <button data-days="custom">مخصص</button>
+    </div>
+    <div class="custom-range" id="custom">
+      <input type="date" id="from" aria-label="من"> – <input type="date" id="to" aria-label="إلى">
+    </div>
+    <button class="btn menu-btn" id="menuBtn" aria-label="القائمة" aria-expanded="false">☰</button>
+    <div class="tools" id="tools">
+    <button class="btn" id="syncBtn" title="سحب آخر البيانات من انستجرام">⟳ تحديث</button>
+    <button class="btn" id="phoneBtn" title="افتح اللوحة من جوالك">📱 الجوال</button>
+    <button class="btn" id="captionBtn" title="راجع الكابشن قبل ما تنشر">فحص كابشن</button>
+    <button class="btn" id="carouselBtn" title="ابنِ كاروسيل أو سلسلة ستوري، أو اكتب سكربت ريل">كاروسيل وريل وستوري</button>
+    <button class="btn" id="weeklyBtn" title="ملخص أسبوع جاهز للحفظ PDF">التقرير الأسبوعي</button>
+    <button class="btn" id="monthlyBtn" title="الشهر كامل مقارنة بالشهر اللي قبله، جاهز للحفظ PDF">التقرير الشهري</button>
+    <button class="btn" id="exportBtn" title="أرقام الفترة المختارة في ملف إكسل: الملخص والبوستات والأيام والعملاء والمبيعات والستوري والجمهور">⬇ إكسل</button>
+    <button class="btn" id="addBtn">+ حساب</button>
+    <button class="btn" id="delAccBtn" title="مسح الحساب المختار وكل بياناته من الأداة" hidden>مسح الحساب</button>
+    <button class="btn" data-lang-toggle>EN</button>
+    <button class="btn" data-theme-toggle>🌙</button>
+    </div>
+  </div>
+</header>
+<nav class="secnav" id="secnav" aria-label="أقسام اللوحة"></nav>
+<div class="ptr" id="ptr" aria-hidden="true">↓</div>
+
+<div class="wrap" id="app"></div>
+
+<dialog id="delAccDlg">
+  <h3>مسح الحساب</h3>
+  <p>بتمسح <b id="delAccName"></b> من الأداة، مع كل بياناته: البوستات، والتعليقات والعملاء، والمبيعات، والأهداف، والأفكار، والمسودات، والتجارب، وصور الستوري.</p>
+  <p class="hint" id="delAccNote"></p>
+  <label for="delAccConfirm">للتأكيد اكتب يوزر الحساب (بدون @)</label>
+  <input type="text" id="delAccConfirm" dir="ltr" autocomplete="off">
+  <div id="delAccErr"></div>
+  <div class="actions">
+    <button class="btn" onclick="delAccDlg.close()">إلغاء</button>
+    <button class="btn danger" id="delAccGo" disabled>امسح نهائياً</button>
+  </div>
+</dialog>
+
+<dialog id="addDlg">
+  <h3>ربط حساب انستجرام</h3>
+  <ol class="steps">
+    <li>ادخل <b>developers.facebook.com</b> ← تطبيقاتي ← تطبيقك ← <b>Instagram</b> ← <b>API setup with Instagram login</b>.</li>
+    <li>في قسم <b>Generate access tokens</b> اضغط <b>Add account</b> وسجّل دخول بحسابك.</li>
+    <li>اضغط <b>Generate token</b> وانسخ التوكن والصقه هنا.</li>
+  </ol>
+  <label for="tok">التوكن (Access Token)</label>
+  <textarea id="tok" rows="3" dir="ltr" placeholder="IGAA..."></textarea>
+  <p class="hint">التوكن يُحفظ على جهازك فقط، والأداة تجدده تلقائياً قبل ما ينتهي.</p>
+  <label for="biz">وش تبيع ومين جمهورك؟</label>
+  <textarea id="biz" rows="2" placeholder="مثلاً: تدريب على التصوير بالجوال. الجمهور: شباب وبنات في الخليج"></textarea>
+  <label for="goal">هدف الحساب</label>
+  <input type="text" id="goal" value="بيع الدورات والخدمات">
+  <div id="addErr"></div>
+  <div class="actions">
+    <button class="btn" onclick="addDlg.close()">إلغاء</button>
+    <button class="btn primary" id="addSave">ربط الحساب</button>
+  </div>
+</dialog>
+
+<dialog id="captionDlg" style="width:min(720px, calc(100vw - 32px))">
+  <h3>فحص الكابشن قبل النشر</h3>
+  <p class="hint">الصق الكابشن والأداة تراجعه بقواعد ثابتة ومن أرقام بوستاتك.</p>
+  <textarea id="capText" rows="6" placeholder="الصق الكابشن هنا…"></textarea>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+    <select id="capKind" aria-label="النوع"><option value="REELS">ريل</option><option value="CAROUSEL_ALBUM">كاروسيل</option><option value="IMAGE">صورة</option></select>
+    <select id="capGoal" aria-label="الهدف"><option value="">الهدف: بدون تحديد</option><option value="جذب">جذب</option><option value="إقناع">إقناع</option><option value="بيع">بيع</option></select>
+    <span class="hint" id="capCount" style="margin:auto 0;margin-inline-start:auto"></span>
+  </div>
+  <div id="capResult"></div>
+  <div class="actions"><button class="btn" onclick="captionDlg.close()">إغلاق</button></div>
+</dialog>
+
+<dialog id="phoneDlg">
+  <h3>افتح اللوحة من جوالك</h3>
+  <ol class="steps">
+    <li>خل الجوال على نفس الواي فاي اللي عليه الماك.</li>
+    <li>افتح Safari في الجوال واكتب هالعنوان:</li>
+  </ol>
+  <div id="phoneUrls"></div>
+  <label>رمز الدخول</label>
+  <div id="phoneCode" style="font-size:30px;font-weight:700;letter-spacing:6px;direction:ltr;text-align:center;background:var(--bg);border-radius:12px;padding:8px"></div>
+  <p class="hint">تكتبه مرة وحدة، والجوال يتذكرك ٩٠ يوم. وتقدر تضيف اللوحة للشاشة الرئيسية من زر المشاركة ← «إضافة إلى الشاشة الرئيسية».</p>
+  <p class="hint" id="phoneDevices"></p>
+  <h3 style="margin-top:22px">التنبيهات على جوالك (تيليجرام)</h3>
+  <div id="tgBox"></div>
+  <div class="actions">
+    <button class="btn" id="phoneNew" title="الأجهزة اللي دخلت قبل بتطلع وتحتاج الرمز الجديد">رمز جديد</button>
+    <button class="btn primary" onclick="phoneDlg.close()">تمام</button>
+  </div>
+</dialog>
+
+<dialog id="goalDlg">
+  <h3>أهداف الشهر</h3>
+  <label for="goalMonth">الشهر</label>
+  <select id="goalMonth"></select>
+  <label for="gFollowers">متابعين جدد</label>
+  <input type="number" id="gFollowers" name="followers" min="0" step="1" placeholder="اتركه فاضي إذا ما تبي هدف">
+  <p class="hint" id="gFollowersHint"></p>
+  <label for="gSales">تسجيلات</label>
+  <input type="number" id="gSales" name="sales" min="0" step="1" placeholder="اتركه فاضي إذا ما تبي هدف">
+  <p class="hint" id="gSalesHint"></p>
+  <label for="gRevenue">الإيراد (ريال)</label>
+  <input type="number" id="gRevenue" name="revenue" min="0" step="100" placeholder="اتركه فاضي إذا ما تبي هدف">
+  <p class="hint" id="gRevenueHint"></p>
+  <div id="goalErr"></div>
+  <div class="actions">
+    <button class="btn" onclick="goalDlg.close()">إلغاء</button>
+    <button class="btn primary" id="goalSave">حفظ</button>
+  </div>
+</dialog>
+
+<dialog id="expDlg">
+  <h3>تجربة جديدة</h3>
+  <p class="hint">غيّر شي واحد بس لفترة، والأداة تقارن بوستات التجربة ببوستاتك قبلها من نفس النوع، وآخرها يوصلك تنبيه بالنتيجة.</p>
+  <label for="expKind">وش بتجرب؟</label>
+  <select id="expKind">
+    <option value="no_tag">أشيل هاشتاق</option>
+    <option value="with_tag">أضيف هاشتاق جديد</option>
+    <option value="short_reels">ريلز أقصر</option>
+    <option value="hook_question">أبدأ الكابشن بسؤال</option>
+    <option value="post_time">أنشر في وقت معين</option>
+    <option value="custom">تغيير ثاني (أي شي)</option>
+  </select>
+  <div id="expParamBox">
+    <label for="expParam" id="expParamLabel"></label>
+    <input type="text" id="expParam" dir="auto">
+    <p class="hint" id="expParamHint"></p>
+  </div>
+  <label for="expName">اسم التجربة <span class="hint">(اختياري)</span></label>
+  <input type="text" id="expName" maxlength="80" placeholder="مثلاً: دعوة للعرض في نص الريل">
+  <label for="expDays">المدة</label>
+  <select id="expDays"><option value="7">أسبوع</option><option value="14" selected>أسبوعين</option><option value="21">٣ أسابيع</option><option value="30">شهر</option></select>
+  <p class="hint">تبدأ من اليوم. كل ما نزّلت بوستات أكثر فيها، صار الحكم أدق (٦ بوستات أو أكثر).</p>
+  <div id="expErr"></div>
+  <div class="actions">
+    <button class="btn" onclick="expDlg.close()">إلغاء</button>
+    <button class="btn primary" id="expSave">ابدأ التجربة</button>
+  </div>
+</dialog>
+
+<dialog id="dmDlg">
+  <h3>رسائل الخاص الجاهزة</h3>
+  <p class="hint">تطلع لما تضغط «رسالة 💬» جنب العميل. اكتب <b>{user}</b> مكان يوزره، و<b>{العرض}</b> <b>{الموعد}</b> <b>{السعر}</b> <b>{الرابط}</b> تنعبى من معلومات العرض. خانة فاضية = ترجع للنص الافتراضي.</p>
+  <h4 style="margin:14px 0 0">معلومات العرض</h4>
+  <div id="dmInfo"></div>
+  <h4 style="margin:18px 0 0">الرسائل</h4>
+  <div id="dmTpls"></div>
+  <div id="dmErr"></div>
+  <div class="actions">
+    <button class="btn" onclick="dmDlg.close()">إلغاء</button>
+    <button class="btn primary" id="dmSave">حفظ</button>
+  </div>
+</dialog>
+
+<dialog id="schedDlg">
+  <h3>جدول بوست</h3>
+  <div id="schedBody"></div>
+  <div id="schedErr"></div>
+  <div class="actions">
+    <button class="btn" onclick="schedDlg.close()">إلغاء</button>
+    <button class="btn primary" id="schedSave">جدوله</button>
+  </div>
+</dialog>
+
+<dialog id="compDlg">
+  <h3 id="compTitle">المنافسين</h3>
+  <div id="compBody"></div>
+  <div id="compErr"></div>
+  <div class="actions">
+    <button class="btn" onclick="compDlg.close()">إغلاق</button>
+    <button class="btn primary" id="compSave">حفظ القائمة</button>
+  </div>
+</dialog>
+
+<dialog id="autoDlg">
+  <h3>رسالة خاص تلقائية</h3>
+  <div id="autoBody"></div>
+  <div id="autoErr"></div>
+  <div class="actions">
+    <button class="btn" onclick="autoDlg.close()">إلغاء</button>
+    <button class="btn primary" id="autoSave">حفظ</button>
+  </div>
+</dialog>
+
+<dialog id="tplDlg">
+  <h3>الردود الجاهزة</h3>
+  <p class="hint">تطلع لما تضغط «رد» جنب التعليق، وتقدر تعدّلها قبل النشر. اكتب <b>{user}</b> مكان يوزر صاحب التعليق.</p>
+  <label for="tplPrice">لما يسأل عن السعر</label>
+  <textarea id="tplPrice" name="سعر" rows="2"></textarea>
+  <label for="tplReg">لما يسأل عن التسجيل</label>
+  <textarea id="tplReg" name="تسجيل" rows="2"></textarea>
+  <label for="tplQ">لما يسأل سؤال عن المجال</label>
+  <textarea id="tplQ" name="سؤال" rows="2"></textarea>
+  <div id="tplErr"></div>
+  <div class="actions">
+    <button class="btn" onclick="tplDlg.close()">إلغاء</button>
+    <button class="btn primary" id="tplSave">حفظ</button>
+  </div>
+</dialog>
+
+<script>
+const $ = (s) => document.querySelector(s);
+// وصف نشاطك الافتراضي من ملف مجالك
+if (window.PROFILE?.business) $("#biz").value = PROFILE.business;
+const LOC = L("ar-SA-u-nu-latn-ca-gregory", "en-US"); // تنسيق التواريخ والأرقام حسب اللغة
+const nf = new Intl.NumberFormat(LOC);
+const num = (x, d = 0) => (x == null ? "—" : nf.format(Math.round(x * 10 ** d) / 10 ** d));
+const PCT = L("٪", "%");
+const pct = (x, d = 1) => (x == null ? "—" : num(x * 100, d) + PCT);
+// بالإنجليزي: 1 post / 2 posts
+const plural = (n, one, many) => (n === 1 ? one : many);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+const SLOTS = ["١٢–٤ بعد نص الليل", "٤–٨ الفجر", "٨–١٢ الصبح", "١٢–٤ الظهر والعصر", "٤–٨ المغرب", "٨–١٢ الليل"];
+
+const state = { accounts: [], id: null, days: 30, from: null, to: null, report: null, charts: [] };
+
+const ON_MAC = ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname); // أزرار الإعدادات الحساسة تطلع بس على الماك
+async function api(path, opts = {}) {
+  const res = await fetch(path, { ...opts, headers: { "content-type": "application/json" }, body: opts.body && JSON.stringify(opts.body) });
+  if (res.status === 401) { location.href = "/login.html"; throw new Error(L("سجّل دخول", "Please sign in")); }
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || L("صار خطأ", "Something went wrong"));
+  return data;
+}
+
+const isoDate = (d) => d.toLocaleDateString("en-CA");
+function setRange(days) {
+  state.days = days;
+  if (days !== "custom") {
+    const to = new Date();
+    const from = new Date(Date.now() - (days - 1) * 864e5);
+    state.from = isoDate(from); state.to = isoDate(to);
+    $("#from").value = state.from; $("#to").value = state.to;
+  }
+  document.querySelectorAll("#ranges button").forEach((b) => b.classList.toggle("on", b.dataset.days == days));
+  $("#custom").classList.toggle("show", days === "custom");
+}
+
+async function loadAccounts() {
+  state.accounts = await api("/api/accounts");
+  const sel = $("#account");
+  sel.innerHTML = state.accounts.map((a) => `<option value="${esc(a.id)}">@${esc(a.username)}${a.is_demo ? L(" (تجريبي)", " (demo)") : ""}</option>`).join("");
+  if (!state.accounts.find((a) => a.id === state.id)) state.id = state.accounts[0]?.id || null;
+  sel.value = state.id || "";
+  sel.style.display = state.accounts.length ? "" : "none";
+  $("#syncBtn").style.display = state.accounts.some((a) => a.id === state.id && !a.is_demo) ? "" : "none";
+  $("#delAccBtn").hidden = !ON_MAC || !state.id;
+}
+
+async function load({ quiet = false } = {}) {
+  if (!state.id) return renderEmpty();
+  if (!quiet) $("#app").innerHTML = `<div class="loading"><div class="spin"></div> جاري التحميل…</div>`;
+  state.report = await api(`/api/accounts/${encodeURIComponent(state.id)}/report?from=${state.from}&to=${state.to}`);
+  const y = scrollY;
+  render();
+  if (quiet) scrollTo(0, y);
+}
+
+// تحديث تلقائي كل دقيقتين بدون ما تتحرك الصفحة (يوقف إذا التبويب مخفي أو نافذة الربط مفتوحة)
+setInterval(async () => {
+  // رسالة الخاص اللي انفتحت محادثتها خلصت، فما نوقف التحديث عشانها
+  if (state.dm?.sent) state.dm = null;
+  if (document.hidden || addDlg.open || delAccDlg.open || tplDlg.open || goalDlg.open || captionDlg.open || phoneDlg.open || !state.report || state.salesDirty || state.reply || state.won || state.dm || dmDlg.open || autoDlg.open || compDlg.open || schedDlg.open || $("#ideaText")?.value) return;
+  // لو اللوحة مفتوحة من أمس، نمد الفترة لليوم عشان تطلع بوستات اليوم
+  if (state.days !== "custom" && state.to !== isoDate(new Date())) setRange(state.days);
+  try { await loadAccounts(); await load({ quiet: true }); } catch {}
+}, 2 * 60 * 1000);
+
+function renderEmpty() {
+  $("#app").innerHTML = `
+  <div class="empty-state">
+    <h2 style="justify-content:center">ابدأ بتحليل حسابك</h2>
+    <p class="sub">اربط حساب انستجرام احترافي عشان تشوف أداء بوستاتك ونصائح مخصصة، أو جرّب اللوحة ببيانات تجريبية.</p>
+    <div class="opts">
+      <div class="card"><h3>اربط حسابك</h3><p class="sub">تحتاج توكن من لوحة مطوري Meta (الخطوات موجودة في نافذة الربط).</p><button class="btn primary" onclick="addDlg.showModal()">ربط حساب</button></div>
+      <div class="card"><h3>جرّب بيانات تجريبية</h3><p class="sub">حساب وهمي لأكاديمية تعليق صوتي فيه ٤ شهور بوستات.</p><button class="btn" id="demoBtn">تحميل التجريبي</button></div>
+    </div>
+  </div>`;
+  $("#demoBtn").onclick = async () => { await api("/api/demo", { method: "POST" }); state.id = "demo"; await loadAccounts(); load(); };
+}
+
+function delta(cur, prev, { lowerIsBetter = false, asPoints = false } = {}) {
+  if (cur == null || prev == null || (prev === 0 && !asPoints)) return `<span class="delta flat">ما فيه مقارنة</span>`;
+  const diff = asPoints ? (cur - prev) * 100 : ((cur - prev) / Math.abs(prev)) * 100;
+  if (Math.abs(diff) < (asPoints ? 0.05 : 0.5)) return `<span class="delta flat">— بدون تغيير</span>`;
+  const good = lowerIsBetter ? diff < 0 : diff > 0;
+  const text = asPoints ? L(`${num(Math.abs(diff), 1)} نقطة`, `${num(Math.abs(diff), 1)} pts`) : `${num(Math.abs(diff))}${PCT}`;
+  return `<span class="delta ${good ? "up" : "down"}">${diff > 0 ? "▲" : "▼"} ${text}</span>`;
+}
+
+function kpiCard(label, cur, prev, fmt, tip, opts) {
+  return `<div class="card kpi">
+    <div class="label">${label}${tip ? ` <span class="tip" title="${esc(tip)}">${L("؟", "?")}</span>` : ""}</div>
+    <div class="value">${fmt(cur)}</div>
+    ${delta(cur, prev, opts)}
+    <div class="prev">${L("الفترة السابقة", "Previous period")}: ${fmt(prev)}</div>
+  </div>`;
+}
+
+function postCard(p, verdicts) {
+  const v = verdicts?.[p.id];
+  const date = new Date(p.timestamp).toLocaleDateString(LOC, { day: "numeric", month: "short" });
+  return `<div class="card post">
+    <div class="thumb">
+      ${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span>${esc(p.kind_name)}</span>`}
+      <span class="badge">${esc(tr(p.kind_name))} · ${date}</span>
+    </div>
+    <div class="body">
+      <div class="cap" data-notr>${esc(p.caption) || `<i>${L("بدون كابشن", "No caption")}</i>`}</div>
+      <div class="stats">
+        <span>${L("الوصول", "Reach")} <b>${num(p.reach)}</b></span><span>${L("التفاعل", "Engagement")} <b>${pct(p.er)}</b></span>
+        <span>${L("حفظ", "Saves")} <b>${num(p.saved)}</b></span><span>${L("مشاركة", "Shares")} <b>${num(p.shares)}</b></span>
+        ${p.profile_visits != null ? `<span>${L("زيارات", "Visits")} <b>${num(p.profile_visits)}</b></span>` : ""}
+        ${p.avg_watch_time != null ? `<span>${L("مشاهدة", "Avg. watch")} <b>${num(p.avg_watch_time, 1)}${L("ث", "s")}</b></span>` : ""}
+      </div>
+      ${v ? `<div class="verdict">${esc(v.why)}</div>` : ""}
+      <div class="score"><span>${L("الاهتمام", "Intent")} <b>${pct(p.intent)}</b></span><a href="${esc(p.permalink)}" target="_blank" rel="noopener">فتح ↗</a></div>
+    </div>
+  </div>`;
+}
+
+// رسائل الخاص الجاهزة: تعبئة اليوزر ومعلومات العرض (الناقص يطلع بين [ ])
+function fillDm(text, c) {
+  const info = state.report.dm.info;
+  return (text || "").replaceAll("{user}", c.username || "").replace(/\{(العرض|الموعد|السعر|الرابط)\}/g, (_, k) => info[k] || `[${k}]`);
+}
+function dmRow(c) {
+  const D = state.report.dm, missing = /\[(العرض|الموعد|السعر|الرابط)\]/.test(state.dm.text);
+  return `<tr class="reply-row"><td colspan="6">
+    <div class="chips" style="flex-wrap:wrap;margin-bottom:6px">${D.keys.map((k) => `<button data-dmkey="${k.key}" class="${state.dm.key === k.key ? "on" : ""}" title="${esc(k.hint)}">${esc(k.name)}</button>`).join("")}</div>
+    <textarea id="dmText" rows="5" maxlength="1000">${esc(state.dm.text)}</textarea>
+    ${missing ? `<div class="err" style="margin-top:6px">${L("فيه معلومات ناقصة بين [ ]. عبّها من «رسائل الخاص ✎» مرة وحدة وتنحط في كل الرسائل.", "Some details are missing (shown in [ ]). Fill them once in “DM templates ✎” and they’ll be used in every message.")}</div>` : ""}
+    <div class="reply-actions">
+      <span class="sub" style="margin:0">${L(`تنسخها وتلصقها في محادثة @${esc(c.username)} (انستجرام يسمح للأداة ترسل أول رسالة بس، من «📩 الخاص التلقائي»).`, `Copy it and paste it into your chat with @${esc(c.username)} (Instagram only lets the tool send the first message, via “📩 Auto DM”).`)}</span>
+      <button class="btn sm" id="dmCancel">إغلاق</button>
+      <button class="btn sm" id="dmCopy">نسخ</button>
+      <button class="btn sm primary" id="dmOpen">نسخ وافتح الخاص ↗</button>
+    </div>
+  </td></tr>`;
+}
+
+function openDmDialog() {
+  const D = state.report.dm;
+  $("#dmInfo").innerHTML = D.info_keys.map((k) => `<label>${esc(k.name)}<input type="text" name="${esc(k.key)}" value="${esc(D.info[k.key])}" placeholder="${esc(k.placeholder)}"></label>`).join("");
+  $("#dmTpls").innerHTML = D.keys.map((k) => `<label>${esc(k.name)} <span class="hint" style="display:inline">${esc(k.hint)}</span><textarea name="${esc(k.key)}" rows="3">${esc(D.templates[k.key])}</textarea></label>`).join("");
+  $("#dmErr").innerHTML = "";
+  dmDlg.showModal();
+}
+
+// النشر المجدول: القائمة، ونافذة الجدولة (رفع الملفات، الكابشن، الوقت)
+const SCHED_KIND = { REELS: ["ريل", "Reel"], IMAGE: ["صورة", "Photo"], CAROUSEL: ["كاروسيل", "Carousel"] };
+const SCHED_STATUS = {
+  waiting: ["بانتظار وقته", "Waiting", ""], preparing: ["قاعد ينشر…", "Publishing…", ""], published: ["نزل ✓", "Published ✓", "good"],
+  failed: ["ما نزل", "Failed", "warn"], missed: ["فات وقته", "Missed", "warn"],
+};
+const schedTime = (t) => new Date(t * 1000).toLocaleString(LOC, { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+function renderSched(list, a) {
+  const box = $("#sched");
+  if (!box) return;
+  const rows = list.map((s) => {
+    const st = SCHED_STATUS[s.status] || [s.status, s.status, ""];
+    const acts = [
+      s.permalink ? `<a class="btn sm" href="${esc(s.permalink)}" target="_blank" rel="noopener" style="text-decoration:none">${L("فتح ↗", "Open ↗")}</a>` : "",
+      ["waiting", "failed", "missed"].includes(s.status) ? `<button class="btn sm" data-snow="${s.id}">${L("انشر الحين", "Publish now")}</button>` : "",
+      s.status !== "preparing" ? `<button class="btn sm" data-scancel="${s.id}">${s.status === "published" ? L("إخفاء", "Hide") : L("إلغاء", "Cancel")}</button>` : "",
+    ].join(" ");
+    return `<tr><td><span class="badge">${L(...SCHED_KIND[s.kind])}${s.files > 1 ? ` (${num(s.files)})` : ""}</span>${s.trial ? ` <span class="sub" style="font-size:12px">${L("تجريبي", "Trial")}</span>` : ""}</td>
+      <td class="txt" data-notr style="max-width:320px">${esc((s.caption || "").split("\n").find((l) => l.trim()) || "—")}</td>
+      <td style="white-space:nowrap">${schedTime(s.publish_at)}</td>
+      <td><span class="pill ${st[2]}" ${s.error ? `title="${esc(s.error)}"` : ""}>${L(st[0], st[1])}</span>${s.error ? `<div class="sub" style="font-size:12px;max-width:260px;margin:4px 0 0">${esc(s.error)}</div>` : ""}</td>
+      <td style="white-space:nowrap">${acts}</td></tr>`;
+  }).join("");
+  box.innerHTML = `<div class="leads-head"><p class="sub" style="margin:0">${a.is_demo ? L("الحساب التجريبي ما ينشر. اربط حسابك عشان تجدول.", "The demo account can't publish. Connect your account to schedule.") : L("ينزل لحاله في وقته. الماك لازم يكون شغال وقتها، والأداة تمنعه ينام وفيه بوست مجدول.", "Posts go out on their own. Your Mac needs to be on at that time; the tool keeps it from sleeping while something is scheduled.")}</p>
+    ${a.is_demo ? "" : `<button class="btn sm primary" id="schedNew">${L("+ جدول بوست", "+ Schedule a post")}</button>`}</div>
+    ${rows ? `<div class="scroll"><table class="leads"><thead><tr><th>${L("النوع", "Type")}</th><th>${L("الكابشن", "Caption")}</th><th>${L("الوقت", "Time")}</th><th>${L("الحالة", "Status")}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`
+      : `<p class="sub" style="margin:8px 0 0">${L("ما فيه شي مجدول.", "Nothing scheduled.")}</p>`}`;
+  $("#schedNew")?.addEventListener("click", openSchedDialog);
+  const act = async (b, path, method) => {
+    b.disabled = true;
+    try { await api(path, { method }); await load({ quiet: true }); } catch (e) { alert(e.message); b.disabled = false; }
+  };
+  box.querySelectorAll("[data-snow]").forEach((b) => (b.onclick = () => confirm(L("ينشره الحين في انستجرام؟", "Publish it to Instagram now?")) && act(b, `/api/scheduled/${b.dataset.snow}/now`, "POST")));
+  box.querySelectorAll("[data-scancel]").forEach((b) => (b.onclick = () => act(b, `/api/scheduled/${b.dataset.scancel}`, "DELETE")));
+}
+
+// أفضل وقت: ساعة قبل ذروة تواجد متابعينك، أول مرة تجي بعد ربع ساعة من الحين
+function bestSlot() {
+  const on = state.report?.account?.online_followers;
+  if (!on) return null;
+  const peak = on.indexOf(Math.max(...on)), hour = (peak + 23) % 24;
+  const t = new Date(); t.setMinutes(0, 0, 0); t.setHours(hour);
+  while (t.getTime() < Date.now() + 15 * 60000) t.setDate(t.getDate() + 1);
+  return t;
+}
+const localInput = (d) => { const p = (n) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
+
+function openSchedDialog() {
+  state.sched = { files: [], busy: 0 };
+  const best = bestSlot();
+  $("#schedBody").innerHTML = `
+    <label for="schedFiles">${L("الملف", "File")}</label>
+    <input type="file" id="schedFiles" multiple accept="video/mp4,video/quicktime,image/jpeg,image/png,image/heic,.mp4,.mov,.jpg,.jpeg,.png,.heic">
+    <p class="hint">${L("فيديو واحد = ريل. صورة وحدة = بوست. أكثر من ملف = كاروسيل (بالكثير ١٠، والفيديو فيه بين ٣ و٦٠ ثانية). الصوت لازم يكون داخل الفيديو: موسيقى مكتبة انستجرام ما تنضاف من برا التطبيق.", "One video = a reel. One image = a photo post. Several files = a carousel (up to 10; videos 3–60 seconds). Audio must be in the video itself: Instagram's music library can't be added from outside the app.")}</p>
+    <div id="schedUp"></div>
+    <label for="schedCap">${L("الكابشن", "Caption")}</label>
+    <textarea id="schedCap" rows="6" maxlength="2200" data-notr></textarea>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:6px"><button class="btn sm" id="schedCheck" type="button">${L("افحص الكابشن", "Check caption")}</button><span id="schedCheckOut" class="sub" style="margin:0"></span></div>
+    <label for="schedAt" style="margin-top:14px">${L("وقت النشر", "Publish time")}</label>
+    <input type="datetime-local" id="schedAt" value="${best ? localInput(best) : ""}">
+    ${best ? `<p class="hint">${L(`مقترح: ${schedTime(best / 1000)}، ساعة قبل ما يكون أغلب متابعينك أونلاين.`, `Suggested: ${schedTime(best / 1000)}, an hour before most of your followers are online.`)}</p>` : ""}
+    <div id="schedReel" hidden>
+      <label class="row" style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" id="schedFeed" checked> ${L("يطلع في شبكة البروفايل بعد", "Also show it on your profile grid")}</label>
+      <label for="schedTrial" style="margin-top:10px">${L("ريل تجريبي (Trial)", "Trial reel")}</label>
+      <select id="schedTrial"><option value="">${L("لا، ريل عادي", "No, a normal reel")}</option><option value="SS_PERFORMANCE">${L("تجريبي لغير المتابعين، وينتقل لمتابعيني لحاله لو نجح", "Trial for non-followers; share to followers automatically if it does well")}</option><option value="MANUAL">${L("تجريبي لغير المتابعين، وأنا أقرر بعدين", "Trial for non-followers; I'll decide later")}</option></select>
+      <label for="schedThumb" style="margin-top:10px">${L("الغلاف من الثانية", "Cover frame at second")} <span class="hint" style="display:inline">${L("(اختياري)", "(optional)")}</span></label>
+      <input type="number" id="schedThumb" min="0" step="0.5" placeholder="0">
+    </div>`;
+  $("#schedErr").innerHTML = "";
+  $("#schedSave").disabled = true;
+  $("#schedFiles").onchange = (e) => uploadSched([...e.target.files]);
+  $("#schedCheck").onclick = async () => {
+    const out = $("#schedCheckOut");
+    try {
+      const kind = state.sched.files.length > 1 ? "CAROUSEL_ALBUM" : state.sched.files[0]?.type === "image" ? "IMAGE" : "REELS";
+      const r = await api(`/api/accounts/${encodeURIComponent(state.id)}/check-caption`, { method: "POST", body: { caption: $("#schedCap").value, kind } });
+      const bad = r.items.filter((x) => x.level === "bad" || x.level === "warn");
+      out.innerHTML = `${L(`${num(r.passed)} من ${num(r.checks)} تمام`, `${num(r.passed)} of ${num(r.checks)} passed`)}${bad.length ? `: ${bad.map((x) => esc(x.title)).join(L("، ", ", "))}` : " ✓"}`;
+    } catch (err) { out.textContent = err.message; }
+  };
+  schedDlg.showModal();
+}
+
+// كل ملف يترفع أول ما تختاره، والزر يتفعّل لما يخلصون
+function uploadSched(files) {
+  state.sched.files = [];
+  $("#schedSave").disabled = true;
+  $("#schedErr").innerHTML = "";
+  if (files.length > 10) { $("#schedErr").innerHTML = `<div class="err">${L("الكاروسيل بالكثير ١٠", "A carousel can have up to 10 items")}</div>`; return; }
+  $("#schedUp").innerHTML = files.map((f, i) => `<div class="sub" style="margin:4px 0" data-notr>${esc(f.name)} · <span id="schedUp${i}">0٪</span></div>`).join("");
+  const isVideo = (f) => /^video\//.test(f.type) || /\.(mp4|mov)$/i.test(f.name);
+  $("#schedReel").hidden = !(files.length === 1 && isVideo(files[0]));
+  state.sched.busy = files.length;
+  files.forEach((f, i) => {
+    const ext = (f.name.split(".").pop() || "").toLowerCase();
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", `/api/accounts/${encodeURIComponent(state.id)}/upload?ext=${encodeURIComponent(ext)}`);
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) $(`#schedUp${i}`).textContent = pct(e.loaded / e.total, 0); };
+    xhr.onload = () => {
+      let r = {};
+      try { r = JSON.parse(xhr.responseText); } catch {}
+      if (xhr.status === 200 && r.token) { state.sched.files[i] = r; $(`#schedUp${i}`).textContent = L("وصل ✓", "Uploaded ✓"); }
+      else $(`#schedUp${i}`).innerHTML = `<span style="color:var(--bad)">${esc(r.error || L("ما وصل", "Failed"))}</span>`;
+      if (--state.sched.busy === 0) $("#schedSave").disabled = state.sched.files.filter(Boolean).length !== files.length;
+    };
+    xhr.onerror = () => { $(`#schedUp${i}`).textContent = L("ما وصل", "Failed"); --state.sched.busy; };
+    xhr.send(f);
+  });
+}
+
+$("#schedSave").onclick = async () => {
+  const at = $("#schedAt").value ? new Date($("#schedAt").value).getTime() / 1000 : NaN;
+  const body = {
+    files: state.sched.files.map((f) => f.token), caption: $("#schedCap").value, publish_at: at,
+    share_to_feed: $("#schedFeed").checked, trial: $("#schedTrial").value || null, thumb_offset: $("#schedThumb").value,
+  };
+  $("#schedSave").disabled = true;
+  try {
+    state.report.scheduled = await api(`/api/accounts/${encodeURIComponent(state.id)}/scheduled`, { method: "POST", body });
+    schedDlg.close();
+    renderSched(state.report.scheduled, state.report.account);
+  } catch (err) { $("#schedErr").innerHTML = `<div class="err">${esc(err.message)}</div>`; $("#schedSave").disabled = false; }
+};
+
+// تابعوك وألغوا: ملخص الفترة مقارنة بالفترة السابقة
+function flowLine(k, pk) {
+  if (k.unfollows == null) return L("تنسحب مع المزامنة الكاملة (Meta تعطيها للحسابات اللي فوق ١٠٠ متابع، وتتأخر يومين).", "Pulled in with the full sync (Meta provides these for accounts with 100+ followers, two days late).");
+  const perDay = (x) => (x.unfollows != null && x.flow_days ? num(x.unfollows / x.flow_days, 1) : null);
+  const prev = perDay(pk) != null ? L(`، والفترة اللي قبلها ${perDay(pk)}`, `; previous period ${perDay(pk)}`) : "";
+  return L(`${num(k.follows)} تابعوك و${num(k.unfollows)} ألغوا (${perDay(k)} باليوم${prev}). بدون آخر يومين لأن Meta تكمّلهم متأخر.`,
+    `${num(k.follows)} followed you and ${num(k.unfollows)} unfollowed (${perDay(k)} a day${prev}). The last two days are left out because Meta fills them in late.`);
+}
+function taggedList(list) {
+  if (!list?.length) return `<p class="sub" style="margin:0">${L("ما أحد حطك بوسم للحين. أول ما يصير، يوصلك تنبيه.", "No one has tagged you yet. You'll get an alert as soon as someone does.")}</p>`;
+  return `<div class="scroll" style="max-height:300px;overflow-y:auto">${list.map((t) => `<div style="display:flex;gap:10px;align-items:baseline;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+    <div style="min-width:0"><bdi><a data-notr dir="ltr" href="https://instagram.com/${encodeURIComponent(t.username)}" target="_blank" rel="noopener" style="color:inherit;font-weight:600">@${esc(t.username)}</a></bdi>
+      <bdi class="sub" style="margin:0 6px;font-size:12.5px">${new Date(t.timestamp).toLocaleDateString(LOC, { day: "numeric", month: "short", year: "numeric" })}</bdi>
+      ${t.caption ? `<div data-notr style="font-size:13.5px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.caption)}</div>` : ""}</div>
+    <a class="btn sm" href="${esc(t.permalink)}" target="_blank" rel="noopener" style="flex:none;text-decoration:none">${L("فتح ↗", "Open ↗")}</a></div>`).join("")}</div>`;
+}
+
+// المنافسين: جدول مقارنة (أنت أول صف) وبوستاتهم اللي جابت ضعف عادتهم
+const KIND_NAME = { REELS: ["ريل", "Reel"], CAROUSEL_ALBUM: ["كاروسيل", "Carousel"], IMAGE: ["صورة", "Photo"] };
+const kindName = (k) => (KIND_NAME[k] ? L(...KIND_NAME[k]) : "—");
+const DAYS_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const signed = (x) => (x == null ? "—" : `<bdi dir="ltr">${x > 0 ? "+" : ""}${num(x)}</bdi>`);
+const igLink = (u, bold) => `<bdi><a data-notr dir="ltr" href="https://instagram.com/${encodeURIComponent(u)}" target="_blank" rel="noopener" style="color:inherit${bold ? ";font-weight:600" : ""}">@${esc(u)}</a></bdi>`;
+
+function renderCompetitors(C, a) {
+  const box = $("#competitors");
+  if (!box) return;
+  const manage = `<button class="btn sm" id="compBtn">${C?.connected || C?.list?.length ? L("إدارة المنافسين ✎", "Manage competitors ✎") : L("اربط وأضف منافسين", "Connect and add competitors")}</button>`;
+  if (!C?.rows?.length) {
+    box.innerHTML = `<div class="card"><p class="sub" style="margin-top:0">${L("قارن نفسك بحسابات في مجالك: متابعينهم ونموهم، وكم ينشرون، وتفاعل جمهورهم، وأي بوستات انفجرت عندهم. يحتاج ربط إضافي عن طريق صفحة فيسبوك المربوطة بحسابك (مرة وحدة).", "Compare yourself with accounts in your niche: followers and growth, how often they post, how their audience engages, and which posts took off. Needs a one-time extra connection through the Facebook Page linked to your account.")}</p>${a.is_demo ? "" : manage}</div>`;
+    $("#compBtn")?.addEventListener("click", openCompDialog);
+    return;
+  }
+  const rows = C.rows;
+  const noGrowth = rows.some((r) => !r.you && !r.error && !r.pending && r.growth_7 == null);
+  const cell = (r) => {
+    if (r.pending) return `<td colspan="8" class="sub">${C.connected ? L("ينسحب الحين…", "Fetching now…") : L("ينسحب بعد ما تربط", "Fetched once you connect")}</td>`;
+    if (r.error && r.followers == null) return `<td colspan="8"><span class="sub">${esc(r.error)}</span></td>`;
+    const day = r.top_day == null ? "—" : L(DAYS[r.top_day], DAYS_EN[r.top_day]);
+    return `<td><b>${num(r.followers)}</b></td><td>${signed(r.growth_7)}</td><td>${signed(r.growth_30)}</td>
+      <td>${num(r.per_week, r.per_week % 1 ? 1 : 0)}</td>
+      <td title="${L("(لايكات + تعليقات) ÷ المتابعين، متوسط بوستات آخر شهرين", "(likes + comments) ÷ followers, median over the last two months")}">${r.hidden_likes ? `<span class="sub">${L("اللايكات مخفية", "Likes hidden")}</span>` : pct(r.eng, 2)}</td>
+      <td>${num(r.comments)}</td><td>${kindName(r.best_kind)}</td><td>${day}</td>`;
+  };
+  box.innerHTML = `
+  ${C.error ? `<div class="err" style="margin-top:0">${esc(C.error)}</div>` : ""}
+  <div class="card scroll">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+      <p class="sub" style="margin:0">${L("التفاعل هنا = اللايكات والتعليقات ÷ المتابعين، لأنه الرقم الوحيد اللي انستجرام يعطيه عن حسابات غيرك. الوصول والحفظ والمشاهدات خاصة فيهم. والحسابات الأصغر عادةً تفاعلها أعلى، فقارن نفسك بحسابات قريبة من حجمك.", "Engagement here = likes and comments ÷ followers, the only figure Instagram gives for other accounts. Reach, saves and views stay private to them. Smaller accounts usually have higher engagement, so compare with accounts close to your size.")}</p>
+      ${a.is_demo ? "" : manage}</div>
+    <table><thead><tr><th>${L("الحساب", "Account")}</th><th>${L("المتابعين", "Followers")}</th><th>${L("آخر ٧ أيام", "Last 7 days")}</th><th>${L("آخر ٣٠ يوم", "Last 30 days")}</th>
+      <th>${L("بوستات بالأسبوع", "Posts / week")}</th><th>${L("التفاعل للبوست", "Engagement / post")}</th><th>${L("تعليقات للبوست", "Comments / post")}</th><th>${L("أقوى نوع", "Best format")}</th><th>${L("أكثر يوم ينشر", "Busiest day")}</th></tr></thead>
+    <tbody>${rows.map((r) => `<tr${r.you ? ' style="background:var(--surface-2,rgba(127,127,127,.08))"' : ""}><td style="white-space:nowrap">${igLink(r.username, true)}${r.you ? ` <span class="sub">${L("(أنت)", "(you)")}</span>` : ""}</td>${cell(r)}</tr>`).join("")}</tbody></table>
+    ${noGrowth ? `<p class="sub" style="margin:8px 0 0">${L("النمو يبين بعد أسبوع من إضافة المنافس: انستجرام ما يعطي أرقامهم القديمة، فالأداة تحفظ لقطة كل يوم من يوم ما أضفته.", "Growth shows up a week after you add a competitor: Instagram doesn't give their past numbers, so the tool saves a daily snapshot from the day you added them.")}</p>` : ""}
+  </div>
+  ${rows.some((r) => !r.you && r.followers != null) ? `<div class="card" style="margin-top:16px"><h3>${L("بوستاتهم اللي انفجرت", "Their breakout posts")}</h3>
+    <p class="sub">${L("آخر شهرين، ضعف عادة صاحبها أو أكثر. شوف الفكرة وأول ثانيتين، وفكّر كيف تسويها بأسلوبك.", "Last two months, at least twice the account's usual. Look at the idea and the first two seconds, then think how you'd do it your way.")}</p>
+    ${C.hits.length ? `<div class="scroll" style="max-height:360px;overflow-y:auto">${C.hits.map((h) => `<div style="display:flex;gap:10px;align-items:baseline;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="min-width:0">${igLink(h.username, true)} <span class="pill good" style="margin:0 4px"><bdi dir="ltr">${num(h.x, 1)}×</bdi></span>
+        <span class="sub" style="font-size:12.5px">${kindName(h.kind)} · <bdi>${new Date(h.timestamp).toLocaleDateString(LOC, { day: "numeric", month: "short" })}</bdi> · ${L(`${num(h.likes)} لايك، ${num(h.comments)} تعليق`, `${num(h.likes)} likes, ${num(h.comments)} comments`)}</span>
+        ${h.caption ? `<div data-notr style="font-size:13.5px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(h.caption)}</div>` : ""}</div>
+      <a class="btn sm" href="${esc(h.permalink)}" target="_blank" rel="noopener" style="flex:none;text-decoration:none">${L("فتح ↗", "Open ↗")}</a></div>`).join("")}</div>`
+    : `<p class="sub" style="margin:0">${L("ما فيه بوست جاب ضعف عادة صاحبه آخر شهرين.", "No post doubled its account's usual in the last two months.")}</p>`}
+  </div>` : ""}`;
+  $("#compBtn")?.addEventListener("click", openCompDialog);
+}
+
+function openCompDialog() {
+  const C = state.report.competitors || { list: [], max: 10 };
+  const form = !C.connected || state.compRetoken;
+  // لو الشاشة مفتوحة وكتب يوزرات وما حفظها، ما نمسحها لما نعيد رسم الربط
+  const typed = compDlg.open ? $("#compList")?.value : null;
+  $("#compBody").innerHTML = `
+    ${C.connected && !state.compRetoken ? `<p style="margin:0">${L(`✓ مربوط عن طريق صفحة «<span data-notr>${esc(C.page_name)}</span>»`, `✓ Connected through the page “<span data-notr>${esc(C.page_name)}</span>”`)}</p>
+      ${C.error ? `<div class="err">${esc(C.error)}</div>` : ""}
+      <p style="margin:6px 0 0"><button class="btn sm" id="compRetok">${L("غيّر التوكن", "Change token")}</button> <button class="btn sm" id="compOff">${L("افصل", "Disconnect")}</button></p>` : ""}
+    ${form ? `<p class="hint" style="margin-top:0">${L("انستجرام يعطي أرقام المنافسين بس عن طريق صفحة فيسبوك المربوطة بحسابك. تسويها مرة وحدة:", "Instagram only gives competitor numbers through the Facebook Page linked to your account. You do this once:")}</p>
+      <ol class="steps">
+        <li>${L(`افتح <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener">Graph API Explorer</a>، واختار تطبيقك من <b>Meta App</b>.`, `Open <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener">Graph API Explorer</a> and pick your app under <b>Meta App</b>.`)}</li>
+        <li>${L("من <b>User or Page</b> اختار <b>Get User Access Token</b>.", "Under <b>User or Page</b>, choose <b>Get User Access Token</b>.")}</li>
+        <li>${L("من <b>Permissions</b> أضف:", "Under <b>Permissions</b>, add:")} <span dir="ltr" data-notr>instagram_basic, instagram_manage_insights, pages_show_list, pages_read_engagement, business_management</span>${L("، واضغط <b>Generate Access Token</b>، واختار صفحتك وحسابك لما يسألك.", ", click <b>Generate Access Token</b>, and select your page and account when asked.")}</li>
+        <li>${L(`انسخ التوكن، والصقه في <a href="https://developers.facebook.com/tools/debug/accesstoken/" target="_blank" rel="noopener">Access Token Debugger</a> واضغط <b>Debug</b>، وتحت اضغط <b>Extend Access Token</b>، وانسخ التوكن الجديد.`, `Copy the token, paste it into <a href="https://developers.facebook.com/tools/debug/accesstoken/" target="_blank" rel="noopener">Access Token Debugger</a>, click <b>Debug</b>, then <b>Extend Access Token</b> at the bottom, and copy the new token.`)}</li>
+        <li>${L("الصقه هنا. الأداة تطلع منه توكن صفحتك (ما ينتهي) وتحفظه على جهازك بس.", "Paste it here. The tool derives your page token from it (it doesn't expire) and keeps it on this computer only.")}</li>
+      </ol>
+      <input type="password" id="compTok" dir="ltr" autocomplete="off" placeholder="EAA..." style="width:100%">
+      <p style="margin:8px 0 0"><button class="btn primary sm" id="compConnect">${L("تحقق واربط", "Verify and connect")}</button>${state.compRetoken ? ` <button class="btn sm" id="compCancelTok">${L("إلغاء", "Cancel")}</button>` : ""}</p>` : ""}
+    <label for="compList" style="margin-top:16px">${L(`حسابات المنافسين (${C.max} بالكثير، كل واحد بسطر)`, `Competitor accounts (up to ${C.max}, one per line)`)}</label>
+    <textarea id="compList" rows="5" dir="ltr" placeholder="@username">${esc(typed ?? C.list.map((c) => "@" + c.username).join("\n"))}</textarea>
+    <p class="hint">${L("لازم تكون حسابات احترافية (صانع محتوى أو تجاري). الحساب الشخصي ما ينقرا.", "They must be professional (creator or business) accounts. Personal accounts can't be read.")}</p>
+    ${C.list.some((c) => c.error) ? `<ul class="log" data-notr>${C.list.filter((c) => c.error).map((c) => `<li>@${esc(c.username)}: ${esc(c.error)}</li>`).join("")}</ul>` : ""}`;
+  $("#compErr").innerHTML = "";
+  const err = (e) => ($("#compErr").innerHTML = `<div class="err">${esc(e.message)}</div>`);
+  const done = (C2) => { state.report.competitors = { ...state.report.competitors, ...C2 }; state.compRetoken = false; openCompDialog(); load({ quiet: true }); };
+  $("#compRetok")?.addEventListener("click", () => { state.compRetoken = true; openCompDialog(); });
+  $("#compCancelTok")?.addEventListener("click", () => { state.compRetoken = false; openCompDialog(); });
+  $("#compOff")?.addEventListener("click", async () => {
+    try { done(await api(`/api/accounts/${encodeURIComponent(state.id)}/competitors/connect`, { method: "DELETE", body: {} })); } catch (e) { err(e); }
+  });
+  $("#compConnect")?.addEventListener("click", async (ev) => {
+    ev.target.disabled = true;
+    try { done(await api(`/api/accounts/${encodeURIComponent(state.id)}/competitors/connect`, { method: "POST", body: { token: $("#compTok").value } })); }
+    catch (e) { err(e); } finally { ev.target.disabled = false; }
+  });
+  if (!compDlg.open) compDlg.showModal();
+}
+$("#compSave").onclick = async (ev) => {
+  ev.target.disabled = true;
+  try {
+    const C2 = await api(`/api/accounts/${encodeURIComponent(state.id)}/competitors`, { method: "PUT", body: { usernames: $("#compList").value } });
+    state.report.competitors = { ...state.report.competitors, ...C2 };
+    compDlg.close();
+    load({ quiet: true });
+  } catch (e) { $("#compErr").innerHTML = `<div class="err">${esc(e.message)}</div>`; } finally { ev.target.disabled = false; }
+};
+
+// مين جمهورك: أعمدة المتابعين (فاتح) والمتفاعلين هالشهر (غامق) لنفس الفئة
+const CITY_AR = {
+  Riyadh: "الرياض", Jeddah: "جدة", Mecca: "مكة", Medina: "المدينة", Dammam: "الدمام", "Al Khobar": "الخبر", Khobar: "الخبر",
+  Taif: "الطائف", Tabuk: "تبوك", Abha: "أبها", Buraidah: "بريدة", Hofuf: "الهفوف", "Al Hofuf": "الهفوف", "Al Jubayl": "الجبيل",
+  "Khamis Mushait": "خميس مشيط", Hail: "حائل", "Ha'il": "حائل", Najran: "نجران", Jazan: "جازان", Yanbu: "ينبع", Qatif: "القطيف", "Al Qatif": "القطيف",
+  Safwa: "صفوى", Tarut: "تاروت", Saihat: "سيهات", "Al Hulaylah": "الحليلة", "Ras Tanura": "رأس تنورة", Dhahran: "الظهران", "Al Awamiyah": "العوامية", "Umm al Hamam": "أم الحمام",
+  "Kuwait City": "الكويت", Hawalli: "حولي", "Al Ahmadi": "الأحمدي", "Al Jahra": "الجهراء", Salmiya: "السالمية",
+  Doha: "الدوحة", "Al Rayyan": "الريان", Dubai: "دبي", "Abu Dhabi": "أبوظبي", Sharjah: "الشارقة", Ajman: "عجمان", "Al Ain": "العين",
+  Manama: "المنامة", Muharraq: "المحرق", Riffa: "الرفاع", "Al Dair": "الدير", Muscat: "مسقط", Seeb: "السيب", "Al-Sib": "السيب", Salalah: "صلالة", Sohar: "صحار",
+  Cairo: "القاهرة", Alexandria: "الإسكندرية", Amman: "عمّان", Baghdad: "بغداد", Basra: "البصرة", "Karbala'": "كربلاء",
+  Casablanca: "الدار البيضاء", Algiers: "الجزائر", Tunis: "تونس", Sanaa: "صنعاء", Beirut: "بيروت", London: "لندن",
+};
+function renderAudience(A) {
+  const box = $("#audience");
+  if (!box) return;
+  if (!A) { box.innerHTML = `<div class="card"><p class="sub" style="margin:0">${L("تنسحب مع المزامنة الكاملة الجاية (Meta تعطيها للحسابات اللي فوق ١٠٠ متابع).", "These are pulled in with the next full sync (Meta only provides them for accounts with 100+ followers).")}</p></div>`; return; }
+  const E = A.engaged, p0 = (x) => pct(x, 0);
+  const region = new Intl.DisplayNames([LANG], { type: "region" });
+  const flag = (c) => (/^[A-Z]{2}$/.test(c) ? String.fromCodePoint(...[...c].map((ch) => 0x1f1a5 + ch.charCodeAt(0))) : "");
+  const cname = (c) => { try { return region.of(c); } catch { return c; } };
+  const city = (k) => { const n = k.split(",")[0].trim(); return LANG === "en" ? n : CITY_AR[n] || n; };
+  const gname = { M: L("رجال", "Men"), F: L("نساء", "Women") };
+  const key = E ? `<div class="aud-key"><span><b style="background:var(--seq-1)"></b>${L("المتابعين", "Followers")}</span><span><b style="background:var(--accent)"></b>${L("المتفاعلين هالشهر", "Engaged this month")}</span></div>` : "";
+  // صف: الاسم، عمود المتابعين (وتحته المتفاعلين)، والنسبة
+  const rows = (list, label, eOf) => {
+    const max = Math.max(...list.map((x) => Math.max(x.share, eOf ? eOf(x) : 0)), 0.0001);
+    return list.map((x) => {
+      const e = eOf ? eOf(x) : null;
+      return `<div class="aud-row"><span data-notr>${label(x)}</span><div class="aud-bars"><i style="width:${(x.share / max) * 100}%"></i>${e != null ? `<i class="e" style="width:${(e / max) * 100}%"></i>` : ""}</div><span class="v">${p0(x.share)}${e != null ? `<small>${p0(e)}</small>` : ""}</span></div>`;
+    }).join("");
+  };
+  const ageE = E ? (x) => E.age.find((y) => y.key === x.key)?.share || 0 : null;
+  const genE = E ? (x) => E.gender.list.find((y) => y.key === x.key)?.share || 0 : null;
+  const ctyE = E ? (x) => E.country[x.key] || 0 : null;
+  const other = (o) => (o >= 0.005 ? `<p class="sub" style="margin:2px 0 0">${L(`باقي الدول ${p0(o)}`, `Other countries ${p0(o)}`)}</p>` : "");
+  box.innerHTML = `<div class="grid two">
+    <div class="card"><h3>${L("الأعمار", "Age")}</h3>${key}${rows(A.followers.age, (x) => x.key.replace("-", "–"), ageE)}
+      <h3 style="margin-top:18px">${L("الجنس", "Gender")}</h3>${rows(A.followers.gender.list, (x) => gname[x.key], genE)}
+      ${A.followers.gender.unknown >= 0.05 ? `<p class="sub" style="margin:2px 0 0">${L(`النسبة من اللي جنسهم معروف. انستجرام ما يعرف جنس ${p0(A.followers.gender.unknown)} من متابعينك.`, `Share of followers whose gender is known. Instagram doesn't know the gender of ${p0(A.followers.gender.unknown)} of your followers.`)}</p>` : ""}</div>
+    <div class="card"><h3>${L("الدول", "Countries")}</h3>${A.map?.length ? `<div class="geo" id="audMap"></div>` : ""}${key}${rows(A.followers.country.list, (x) => `${flag(x.key)} ${esc(cname(x.key))}`, ctyE)}${other(A.followers.country.other)}
+      ${A.gulf_share ? `<p class="sub" style="margin:6px 0 0">${L(`الخليج كله ${p0(A.gulf_share)} من متابعينك.`, `The Gulf as a whole is ${p0(A.gulf_share)} of your followers.`)}</p>` : ""}
+      <h3 style="margin-top:18px">${L("المدن", "Cities")}</h3>${rows(A.followers.city.list, (x) => esc(city(x.key)), null)}</div>
+  </div>
+  <p class="sub">${L(`${num(A.total)} متابع${E ? ` و${num(A.engaged_total)} تفاعلوا معك هالشهر` : ""}. Meta تحدّثها مرة باليوم، وآخر تحديث ${A.date}.`, `${num(A.total)} followers${E ? ` and ${num(A.engaged_total)} who engaged this month` : ""}. Meta updates these once a day; last updated ${A.date}.`)}</p>`;
+  if (A.map?.length) drawMap(A, { flag, cname, p0 });
+}
+
+// خريطة الدول: كل دولة ملوّنة حسب نسبتها من متابعينك، وتقرّب على الشرق الأوسط لو أغلبهم فيه
+let WORLD = null, mapView = null, mapTipOff = null;
+const MENA = ["SA", "KW", "AE", "QA", "BH", "OM", "YE", "IQ", "JO", "SY", "LB", "PS", "IL", "EG", "IR", "TR", "SD", "LY", "CY"];
+const MAP_STEPS = [0, 0.02, 0.1, 0.25, 0.5];
+async function drawMap(A, { flag, cname, p0 }) {
+  const box = $("#audMap");
+  try { WORLD ||= await (await fetch("/world.json")).json(); } catch { box?.remove(); return; }
+  if (!box?.isConnected) return;
+  const data = Object.fromEntries(A.map.map((x) => [x.key, x])), E = A.engaged;
+  const step = (s) => 1 + MAP_STEPS.findLastIndex((t) => s >= t);
+  const me = A.map.filter((x) => MENA.includes(x.key)).reduce((a, x) => a + x.share, 0);
+  mapView ||= me >= 0.5 ? "me" : "world";
+  const world = [0, 0, WORLD.w, WORLD.h];
+  const target = () => (mapView === "me" ? WORLD.me : world);
+  const shapes = Object.entries(WORLD.c).map(([k, c]) => {
+    const x = data[k];
+    return `<path d="${c.d}" data-k="${k}" class="${x ? "has" : ""}"${x ? ` style="fill:var(--seq-${step(x.share)})"` : ""}/>`;
+  }).join("");
+  const dots = Object.entries(WORLD.c).filter(([k, c]) => c.dot && data[k])
+    .map(([k, c]) => `<circle cx="${c.dot[0]}" cy="${c.dot[1]}" data-k="${k}" class="${c.s < 2.5 ? "tiny" : ""}" style="fill:var(--seq-${step(data[k].share)})"/>`).join("");
+  box.innerHTML = `
+    <div class="chips geo-views" role="group" aria-label="${L("نطاق الخريطة", "Map area")}">
+      <button data-v="me" class="${mapView === "me" ? "on" : ""}">${L("الشرق الأوسط", "Middle East")}</button>
+      <button data-v="world" class="${mapView === "world" ? "on" : ""}">${L("العالم", "World")}</button>
+    </div>
+    <svg viewBox="${target().join(" ")}" role="img" aria-label="${L("خريطة دول متابعينك، والأرقام نفسها في القائمة تحت", "Map of your followers' countries; the same numbers are in the list below")}">
+      <g class="land">${WORLD.rest.map((d) => `<path d="${d}"/>`).join("")}${shapes}</g><g class="dots">${dots}</g>
+    </svg>
+    <div class="geo-tip" hidden></div>
+    <div class="legend-seq">${L("أقل", "Fewer")} ${MAP_STEPS.map((t, i) => `<span style="background:var(--seq-${i + 1})" title="${i ? `${p0(t)}+` : L("أقل من ٢٪", "Under 2%")}"></span>`).join("")} ${L("أكثر", "More")}
+      <span class="geo-none"></span>${L("ما طلعت في أرقام انستجرام", "Not in Instagram's numbers")}</div>`;
+  const svg = box.querySelector("svg"), tip = box.querySelector(".geo-tip");
+  // النقاط (للدول الصغيرة) تبقى بنفس الحجم على الشاشة مهما قرّبت
+  const sizeDots = (vb) => {
+    const u = vb[2] / (svg.clientWidth || 500);
+    svg.querySelectorAll(".dots circle").forEach((c) => {
+      c.setAttribute("r", (c.classList.contains("tiny") || mapView === "world" ? 4.5 : 0) * u);
+    });
+  };
+  sizeDots(target());
+  let anim = 0;
+  box.querySelector(".geo-views").onclick = (e) => {
+    const v = e.target.closest("[data-v]")?.dataset.v;
+    if (!v || v === mapView) return;
+    show({ target: svg });
+    box.querySelectorAll(".geo-views button").forEach((b) => b.classList.toggle("on", b.dataset.v === v));
+    const from = svg.getAttribute("viewBox").split(" ").map(Number);
+    mapView = v;
+    const to = target(), t0 = performance.now(), dur = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 650;
+    cancelAnimationFrame(anim);
+    const tick = (now) => {
+      const t = dur ? Math.min(1, (now - t0) / dur) : 1, e2 = t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+      const vb = from.map((a, i) => a + (to[i] - a) * e2);
+      svg.setAttribute("viewBox", vb.join(" "));
+      sizeDots(vb);
+      if (t < 1) anim = requestAnimationFrame(tick);
+    };
+    anim = requestAnimationFrame(tick);
+  };
+  // تمر على دولة (أو تضغطها من الجوال): تنبرز ويطلع اسمها ونسبتها
+  let on = null;
+  const show = (e) => {
+    const el = e.target.closest?.("[data-k]");
+    if (on && on !== el) on.classList.remove("on");
+    if (!el) { tip.hidden = true; on = null; return; }
+    const k = el.dataset.k, x = data[k];
+    if (on !== el) {
+      on = el; el.classList.add("on");
+      if (el.tagName === "path") el.parentNode.append(el); // فوق جيرانها عشان يبين إطارها
+      const e1 = E && x ? E.country[k] || 0 : null;
+      tip.innerHTML = `<b data-notr>${flag(k)} ${esc(cname(k))}</b>` + (x
+        ? `<div>${L(`${p0(x.share)} من متابعينك (${num(x.value)})`, `${p0(x.share)} of your followers (${num(x.value)})`)}</div>${e1 != null ? `<div class="sub" style="margin:0">${L(`${p0(e1)} من المتفاعلين هالشهر`, `${p0(e1)} of this month's engaged`)}</div>` : ""}`
+        : `<div class="sub" style="margin:0">${L("ما طلعت في أرقام انستجرام (يعطي أكبر ٤٥ دولة بس)", "Not in Instagram's numbers (it only gives the top 45 countries)")}</div>`);
+      tip.hidden = false;
+    }
+    const r = box.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+    const px = e.clientX - r.left, py = e.clientY - r.top;
+    tip.style.left = `${Math.max(0, Math.min(r.width - w, px - w / 2))}px`;
+    tip.style.top = `${py - h - 14 < 0 ? py + 18 : py - h - 14}px`;
+  };
+  svg.addEventListener("pointermove", show);
+  svg.addEventListener("pointerdown", show);
+  svg.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") show({ target: svg }); });
+  // من الجوال: تضغط برا الخريطة يختفي التلميح
+  mapTipOff = (e) => { if (on && !box.contains(e.target)) show({ target: svg }); };
+}
+addEventListener("pointerdown", (e) => mapTipOff?.(e));
+
+// الخاص التلقائي: إعداداته، ومعاينة الرسالة، وآخر اللي انرسل لهم
+function openAutoDialog() {
+  const A = state.report.autodm, D = state.report.dm;
+  const missing = [...new Set([...D.templates.first.matchAll(/\{(العرض|الموعد|السعر|الرابط)\}/g)].map((m) => m[1]).filter((k) => !D.info[k]))];
+  if (/\[[^\]\n]{2,}\]/.test(D.templates.first.replace(/\{[^}]+\}/g, ""))) missing.push(L("النص اللي بين [ ] في الرسالة", "the text in [ ] in the message"));
+  const sample = fillDm(D.templates.first, { username: L("فلان", "someone") });
+  const kw = esc(PROFILE.cta_word || "…");
+  const status = { sent: L("انرسلت ✓", "Sent ✓"), failed: L("ما وصلت", "Failed"), skipped: L("تخطّيته", "Skipped") };
+  $("#autoBody").innerHTML = `
+    <p class="hint">${L("لما أحد يسأل عن السعر أو التسجيل بالتعليقات، أو يكتب كلمتك، ترسل له الأداة «أول رسالة بالخاص» خلال دقيقتين، وترد تحت تعليقه إنك أرسلت. انستجرام يسمح برسالة وحدة لكل تعليق، والمتابعة بعدها تكون منك.", "When someone asks about price or sign-up in the comments, or comments your keyword, the tool sends them your “First DM” within 2 minutes and replies under their comment. Instagram allows one message per comment; follow-ups are up to you.")}</p>
+    <label class="row"><input type="checkbox" id="autoOn" ${A.enabled ? "checked" : ""}> <b>${L("شغّل الخاص التلقائي", "Turn on Auto DM")}</b></label>
+    <p class="sub" style="margin:4px 0 0">${A.enabled ? L("شغّال من ", "On since ") + new Date(A.enabled_at.replace("+0000", "Z")).toLocaleString(LOC, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) + L(". التعليقات اللي قبل ما تنرسل لها.", ". Earlier comments are not messaged.") : L("يبدأ من لحظة التشغيل. التعليقات القديمة ما ينرسل لها شي.", "Starts the moment you turn it on. Older comments are not messaged.")}</p>
+    <label for="autoKw" style="margin-top:14px">${L("كلمتك بالتعليقات", "Your comment keyword")} <span class="hint" style="display:inline">${L("(لو أكثر من وحدة افصل بفاصلة)", "(separate several with commas)")}</span></label>
+    <input type="text" id="autoKw" value="${esc(A.keywords)}" placeholder="${esc(PROFILE.cta_word || "")}">
+    <p class="sub" style="margin:4px 0 0">${L(`ينحسب لما يكون التعليق هو الكلمة نفسها، مثل «${kw}» أو «${kw} 🙏»، مو جملة فيها الكلمة. وأسئلة السعر والتسجيل تنحسب دايماً.`, `Counts when the comment is just the word, like «${kw}» or «${kw} 🙏», not a sentence that happens to contain it. Price and sign-up questions always count.`)}</p>
+    <h4 style="margin:16px 0 0">${L("الرسالة اللي توصلهم", "The message they get")}</h4>
+    <div class="msg" data-notr>${esc(sample)}</div>
+    ${missing.length ? `<div class="err" style="margin-top:6px">${L(`ناقص ${missing.join(" و")}. عبّه من «رسائل الخاص ✎» قبل التشغيل.`, `Missing: ${missing.join(", ")}. Fill it in “DM templates ✎” before turning this on.`)}</div>` : ""}
+    <p class="sub" style="margin:4px 0 0">${L("هذي «أول رسالة بالخاص». تعدّلها من «رسائل الخاص ✎».", "This is your “First DM”. Edit it in “DM templates ✎”.")}</p>
+    <label class="row"><input type="checkbox" id="autoPub" ${A.public_reply ? "checked" : ""}> ${L("رد تحت التعليق إني أرسلت", "Reply under the comment that I sent it")}</label>
+    <textarea id="autoReply" rows="3" style="margin-top:6px">${esc(A.reply)}</textarea>
+    <p class="sub" style="margin:4px 0 0">${L("كل سطر رد. الأداة تختار واحد عشوائي كل مرة عشان ما تتكرر نفس الجملة. {user} = يوزره.", "One reply per line. The tool picks one at random each time so it doesn't repeat. {user} = their username.")}</p>
+    <h4 style="margin:16px 0 0">${L("آخر ٧ أيام", "Last 7 days")}</h4>
+    <p class="sub" style="margin:4px 0 0">${A.sent_7d || A.failed_7d ? L(`انرسل لـ ${num(A.sent_7d)}${A.failed_7d ? `، وما وصل لـ ${num(A.failed_7d)}` : ""}.`, `Sent to ${num(A.sent_7d)}${A.failed_7d ? `, failed for ${num(A.failed_7d)}` : ""}.`) : A.enabled ? L("ما انرسل لأحد للحين. أول ما أحد يسأل، توصله خلال دقيقتين.", "No one yet. As soon as someone asks, they get it within 2 minutes.") : A.would_7d ? L(`لو كانت شغالة، كان بيوصل لـ ${num(A.would_7d)} ${A.would_7d === 1 || A.would_7d > 10 ? "شخص" : "أشخاص"} (${A.would_users.map((u) => "@" + esc(u)).join("، ")}).`, `If it had been on, ${num(A.would_7d)} ${plural(A.would_7d, "person", "people")} would have got it (${A.would_users.map((u) => "@" + esc(u)).join(", ")}).`) : L("ما أحد سأل عن السعر أو التسجيل.", "No one asked about price or sign-up.")}</p>
+    ${A.log.length ? `<ul class="log" data-notr>${A.log.map((x) => `<li>@${esc(x.username)}: ${status[x.dm_status] || ""}${x.dm_error ? ` (${esc(x.dm_error)})` : ""}</li>`).join("")}</ul>` : ""}`;
+  $("#autoErr").innerHTML = "";
+  autoDlg.showModal();
+}
+$("#autoSave").onclick = async () => {
+  const body = { enabled: $("#autoOn").checked, keywords: $("#autoKw").value, public_reply: $("#autoPub").checked, reply: $("#autoReply").value };
+  try {
+    state.report.autodm = await api(`/api/accounts/${encodeURIComponent(state.id)}/autodm`, { method: "PUT", body });
+    autoDlg.close();
+    load({ quiet: true });
+  } catch (err) { $("#autoErr").innerHTML = `<div class="err">${esc(err.message)}</div>`; }
+};
+
+// أزرار كل عميل حسب مرحلته، وفوقها إذا انرسلت له رسالة تلقائية
+function leadActions(c) {
+  const when = c.dm_at ? new Date(c.dm_at * 1000).toLocaleString(LOC, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : "";
+  const tag = c.dm_status === "sent" ? `<div class="auto-tag">${L(`📩 انرسلت له بالخاص تلقائياً (${when})`, `📩 Auto DM sent (${when})`)}</div>`
+    : c.dm_status === "failed" ? `<div class="auto-tag bad" title="${esc(c.dm_error || "")}">${L("⚠️ الرسالة التلقائية ما وصلت، راسله بنفسك", "⚠️ Auto DM failed, message them yourself")}</div>` : "";
+  return tag + leadButtons(c);
+}
+function leadButtons(c) {
+  const id = esc(c.id), dm = c.username ? `<a class="btn sm" href="https://ig.me/m/${encodeURIComponent(c.username)}" target="_blank" rel="noopener" title="افتح المحادثة الخاصة في انستجرام">خاص ↗</a>` : "";
+  const handle = `<button class="btn sm" data-handle="${id}" data-v="${c.handled ? 0 : 1}">${c.handled ? "تراجع" : "تم ✓"}</button>`;
+  if (!c.stage) return c.replied ? `<span class="sub">رديت ✓</span>` : `${c.handled ? "" : `<button class="btn sm primary" data-reply="${id}">رد</button> `}${handle}`;
+  const undo = `<button class="btn sm" data-out="" data-id="${id}">تراجع</button>`;
+  const msg = (key) => (c.username ? `<button class="btn sm" data-dm="${id}" data-key="${key}" title="رسالة جاهزة تنسخها للخاص">رسالة 💬</button>` : "");
+  const outcome = `<button class="btn sm primary" data-out="سجّل" data-id="${id}">سجّل ✓</button><button class="btn sm" data-out="ما سجّل" data-id="${id}">ما سجّل</button>`;
+  switch (c.stage) {
+    case "جديد": return `<button class="btn sm primary" data-reply="${id}">رد</button> ${handle} ${msg("first")}`;
+    case "سجّل": return `<span class="stage won">سجّل ✓</span> ${undo}`;
+    case "ما سجّل": return `<span class="stage">ما سجّل</span> ${undo}`;
+    case "يحتاج متابعة": return `<div class="stage due">${L("يحتاج متابعة", "Needs follow-up")}${c.followed ? L(" (مرة ثانية)", " (again)") : ""}</div><div class="lead-acts">${msg(c.followed ? "followup2" : "followup1")}${dm}<button class="btn sm" data-follow data-id="${id}" title="راسلته، ذكّرني بعد أسبوع إذا ما سجّل">تابعته</button>${outcome}</div>`;
+    default: return `<div class="stage">${c.replied ? L("رديت", "Replied") : L("تم", "Done")} ✓${c.followed ? L(" · تابعته", " · Followed up") : ""}</div><div class="lead-acts">${msg("first")}${outcome}</div>`;
+  }
+}
+
+function renderLeads(cm, a) {
+  const box = $("#leads");
+  if (!a.is_demo && a.comments_ok === 0) {
+    box.innerHTML = `<div class="err" style="margin:0">التوكن الحالي ما فيه صلاحية قراءة التعليقات، فانستجرام يرجع القائمة فاضية.</div>
+      <p class="sub">عشان تشتغل: في لوحة مطوري Meta أضف صلاحية <b>instagram_business_manage_comments</b> لتطبيقك، وبعدها ولّد توكن جديد من صفحة API setup with Instagram login، واضغط «+ حساب» هنا والصق التوكن الجديد (نفس الحساب يتحدث وما تضيع بياناته).</p>`;
+    return;
+  }
+  if (!cm.kpis.total) {
+    box.innerHTML = `<p class="sub" style="margin:0">${a.is_demo || a.comments_ok ? L("ما فيه تعليقات في هالفترة.", "No comments in this period.") : L("التعليقات تنسحب مع التحديث الجاي (خلال دقيقتين).", "Comments will be pulled in on the next refresh (within 2 minutes).")}</p>`;
+    return;
+  }
+  const k = cm.kpis, pl = cm.pipeline, isOpen = (c) => (c.stage ? c.stage === "جديد" : !c.replied && !c.handled);
+  const due = (c) => c.stage === "يحتاج متابعة";
+  const f = state.leadFilter || (cm.list.some(isOpen) || !cm.due ? "open" : "due"), t = state.leadType || "all";
+  const byStatus = cm.list.filter((c) => f === "all" || (f === "due" ? due(c) : isOpen(c)));
+  const rows = byStatus.filter((c) => t === "all" || c.intent === t);
+  const types = ["سعر", "تسجيل", "سؤال"].map((name) => [name, byStatus.filter((c) => c.intent === name).length]);
+  const tone = { "سعر": "", "تسجيل": "", "سؤال": "style=\"background:var(--surface-2);color:var(--text-2)\"" };
+  box.innerHTML = `
+    <div class="leads-head">
+      <div class="stats">
+        <span class="pill">${L(`${num(k.total)} تعليق`, `${num(k.total)} ${plural(k.total, "comment", "comments")}`)}</span>
+        <span class="pill">${L(`${num(k.leads)} يسأل عن السعر أو التسجيل`, `${num(k.leads)} asking about price or sign-up`)}</span>
+        ${k.open ? `<span class="pill warn">${L(`${num(k.open)} ما رديت عليهم`, `${num(k.open)} not replied`)}</span>` : ""}
+        ${k.reply_rate != null ? `<span class="pill">${L(`نسبة الرد ${pct(k.reply_rate)}`, `Reply rate ${pct(k.reply_rate)}`)}</span>` : ""}
+        ${cm.due ? `<span class="pill warn">${L(`${num(cm.due)} يحتاج متابعة`, `${num(cm.due)} need follow-up`)}</span>` : ""}
+        ${pl.stages["سجّل"] ? `<span class="pill" style="background:var(--good-soft);color:var(--good)">${L(`سجّل ${num(pl.stages["سجّل"])} (${pct(pl.conversion)} من اللي سألوا)`, `${num(pl.stages["سجّل"])} signed up (${pct(pl.conversion)} of those who asked)`)}</span>` : ""}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <button class="btn sm" id="tplBtn" title="الردود اللي تطلع لما تضغط «رد»">الردود الجاهزة ✎</button>
+        <button class="btn sm" id="dmBtn" title="رسائل الخاص للمتابعة والاعتراضات، ومعلومات العرض">رسائل الخاص ✎</button>
+        <button class="btn sm${state.report.autodm?.enabled ? " primary" : ""}" id="autoBtn" title="${L("ترسل «أول رسالة بالخاص» لحالها لكل من يسأل بالتعليقات", "Sends the “First DM” automatically to everyone who asks in the comments")}">${state.report.autodm?.enabled ? L("📩 الخاص التلقائي: شغّال", "📩 Auto DM: on") : L("📩 الخاص التلقائي", "📩 Auto DM")}</button>
+        <div class="chips" id="leadType">
+          <button data-t="all" class="${t === "all" ? "on" : ""}">${L("كل الأنواع", "All types")} (${num(byStatus.length)})</button>
+          ${types.map(([name, n]) => `<button data-t="${name}" class="${t === name ? "on" : ""}">${tr(name)} (${num(n)})</button>`).join("")}
+        </div>
+        <div class="chips" id="leadFilter">
+          <button data-f="open" class="${f === "open" ? "on" : ""}">${L("ما رديت عليها", "Not replied")} (${num(cm.list.filter(isOpen).length)})</button>
+          <button data-f="due" class="${f === "due" ? "on" : ""}">${L("يحتاج متابعة", "Needs follow-up")} (${num(cm.list.filter(due).length)})</button>
+          <button data-f="all" class="${f === "all" ? "on" : ""}">الكل</button>
+        </div>
+      </div>
+    </div>
+    ${rows.length ? `<div class="scroll" style="max-height:420px;overflow-y:auto"><table class="leads">
+      <thead><tr><th>النوع</th><th>الشخص</th><th>التعليق</th><th>على بوست</th><th>متى</th><th></th></tr></thead>
+      <tbody>${rows.map((c) => `<tr class="${isOpen(c) || due(c) ? "" : "done"}">
+        <td><span class="badge" ${tone[c.intent]}>${esc(c.intent)}</span></td>
+        <td data-notr><a href="https://instagram.com/${encodeURIComponent(c.username || "")}" target="_blank" rel="noopener" style="color:inherit">@${esc(c.username)}</a></td>
+        <td class="txt" data-notr>${esc(c.text)}</td>
+        <td>${c.permalink ? `<a href="${esc(c.permalink)}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">${c.post ? `<span data-notr>${esc(c.post)}</span>` : L("فتح ↗", "Open ↗")}</a>` : "—"}</td>
+        <td style="white-space:nowrap">${new Date(c.timestamp).toLocaleString(LOC, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</td>
+        <td style="white-space:nowrap">${leadActions(c)}</td>
+      </tr>${state.dm?.id === c.id ? dmRow(c) : ""}${state.won?.id === c.id ? `<tr class="reply-row"><td colspan="6">
+        <div class="reply-actions">
+          <span class="sub" style="margin:0">${L(`@${esc(c.username)} سجّل 🎉`, `@${esc(c.username)} signed up 🎉`)}</span>
+          <label class="sub" style="margin:0">${L("المبلغ", "Amount")} <input type="number" id="wonAmount" min="0" step="1" placeholder="${L("اختياري", "Optional")}" value="${esc(state.won.amount)}"> ${L("ريال", "SAR")}</label>
+          <label class="sub" style="margin:0"><input type="checkbox" id="wonSale" ${state.won.add ? "checked" : ""}> أضفه لقسم التسجيلات</label>
+          <button class="btn sm" id="wonCancel">إلغاء</button>
+          <button class="btn sm primary" id="wonSave">حفظ</button>
+        </div>
+        <div id="wonErr"></div>
+      </td></tr>` : ""}${state.reply?.id === c.id ? `<tr class="reply-row"><td colspan="6">
+        <textarea id="replyText" rows="2" maxlength="2200">${esc(state.reply.text)}</textarea>
+        <div class="reply-actions">
+          <span class="sub" style="margin:0">${L(`ينزل كرد عام تحت تعليق @${esc(c.username)} في انستجرام${a.is_demo ? " (التجريبي: ما ينرسل فعلياً)" : ""}.`, `Posts as a public reply to @${esc(c.username)}’s comment on Instagram${a.is_demo ? " (demo: not actually sent)" : ""}.`)}</span>
+          <button class="btn sm" id="replyCancel">إلغاء</button>
+          <button class="btn sm primary" id="replySend">انشر الرد</button>
+        </div>
+        <div id="replyErr"></div>
+      </td></tr>` : ""}`).join("")}</tbody></table></div>` : `<p class="sub">${t === "all" ? L("رديت على الكل 👏", "All caught up 👏") : L(`ما فيه تعليقات «${t}» هنا.`, `No “${tr(t)}” comments here.`)}</p>`}
+    <p class="sub" style="margin-bottom:0">«رديت ✓» تطلع تلقائياً إذا رديت من حسابك على التعليق. إذا رديت في الخاص اضغط «تم». بعد الرد علّم النتيجة: «سجّل» أو «ما سجّل». واللي ما تعلّم نتيجتهم بعد ٣ أيام من الرد يطلعون في «يحتاج متابعة» وتوصلك عنهم رسالة الساعة ١٠ الصبح.</p>`;
+  // تغيير الفلتر يقفل أي رد أو رسالة مفتوحة (وإلا يختفي زر الإلغاء والتحديث التلقائي يظل واقف)
+  box.querySelectorAll("#leadFilter button").forEach((b) => (b.onclick = () => { Object.assign(state, { leadFilter: b.dataset.f, reply: null, won: null, dm: null }); renderLeads(cm, a); }));
+  box.querySelectorAll("#leadType button").forEach((b) => (b.onclick = () => { Object.assign(state, { leadType: b.dataset.t, reply: null, won: null, dm: null }); renderLeads(cm, a); }));
+  box.querySelectorAll("[data-reply]").forEach((b) => (b.onclick = () => {
+    const tpl = state.report.templates, c = cm.list.find((x) => x.id === b.dataset.reply);
+    state.reply = { id: c.id, text: (tpl[c.intent] || tpl["سؤال"] || "").replaceAll("{user}", c.username || "") };
+    renderLeads(cm, a);
+    $("#replyText").focus();
+  }));
+  if (state.reply && $("#replyText")) {
+    $("#replyText").oninput = (e) => (state.reply.text = e.target.value);
+    $("#replyCancel").onclick = () => { state.reply = null; renderLeads(cm, a); };
+    $("#replySend").onclick = async () => {
+      const btn = $("#replySend");
+      btn.disabled = true; btn.textContent = L("جاري النشر…", "Posting…");
+      try {
+        await api(`/api/comments/${encodeURIComponent(state.reply.id)}/reply`, { method: "POST", body: { text: $("#replyText").value } });
+        state.reply = null;
+        load({ quiet: true });
+      } catch (err) {
+        btn.disabled = false; btn.textContent = L("انشر الرد", "Post reply");
+        $("#replyErr").innerHTML = `<div class="err">${L("ما انرسل الرد", "Reply not sent")}: ${esc(err.message)}</div>`;
+      }
+    };
+  }
+  $("#tplBtn").onclick = () => {
+    for (const k of ["سعر", "تسجيل", "سؤال"]) tplDlg.querySelector(`[name="${k}"]`).value = state.report.templates[k] || "";
+    $("#tplErr").innerHTML = "";
+    tplDlg.showModal();
+  };
+  const post = async (b, path, body) => {
+    b.disabled = true;
+    try { await api(`/api/comments/${encodeURIComponent(b.dataset.id)}/${path}`, { method: "POST", body }); }
+    finally { load({ quiet: true }); }
+  };
+  box.querySelectorAll("[data-out]").forEach((b) => (b.onclick = () => {
+    if (b.dataset.out === "سجّل") { state.won = { id: b.dataset.id, amount: "", add: true }; state.reply = null; return renderLeads(cm, a); }
+    post(b, "outcome", { outcome: b.dataset.out || null });
+  }));
+  box.querySelectorAll("[data-dm]").forEach((b) => (b.onclick = () => {
+    const c = cm.list.find((x) => x.id === b.dataset.dm);
+    state.dm = { id: c.id, key: b.dataset.key, text: fillDm(state.report.dm.templates[b.dataset.key], c) };
+    state.reply = null; state.won = null; renderLeads(cm, a);
+  }));
+  if (state.dm && $("#dmText")) {
+    const c = cm.list.find((x) => x.id === state.dm.id);
+    $("#dmText").oninput = (e) => (state.dm.text = e.target.value);
+    box.querySelectorAll("[data-dmkey]").forEach((b) => (b.onclick = () => { state.dm.key = b.dataset.dmkey; state.dm.text = fillDm(state.report.dm.templates[b.dataset.dmkey], c); renderLeads(cm, a); }));
+    $("#dmCancel").onclick = () => { state.dm = null; renderLeads(cm, a); };
+    const copy = async () => { try { await navigator.clipboard.writeText($("#dmText").value); return true; } catch { $("#dmText").select(); document.execCommand("copy"); return true; } };
+    $("#dmCopy").onclick = async () => { await copy(); $("#dmCopy").textContent = L("انسخت ✓", "Copied ✓"); };
+    $("#dmOpen").onclick = async () => { await copy(); open(`https://ig.me/m/${encodeURIComponent(c.username)}`, "_blank"); $("#dmOpen").textContent = L("انسخت ✓ الصقها في المحادثة", "Copied ✓ Paste it in the chat"); state.dm.sent = true; };
+  }
+  $("#dmBtn").onclick = openDmDialog;
+  $("#autoBtn").onclick = openAutoDialog;
+  box.querySelectorAll("[data-follow]").forEach((b) => (b.onclick = () => post(b, "followed", { followed: true })));
+  if (state.won && $("#wonSave")) {
+    $("#wonAmount").oninput = (e) => (state.won.amount = e.target.value);
+    $("#wonSale").onchange = (e) => (state.won.add = e.target.checked);
+    $("#wonCancel").onclick = () => { state.won = null; renderLeads(cm, a); };
+    $("#wonSave").onclick = async () => {
+      const btn = $("#wonSave");
+      btn.disabled = true;
+      try {
+        await api(`/api/comments/${encodeURIComponent(state.won.id)}/outcome`, { method: "POST", body: { outcome: "سجّل", add_sale: state.won.add, amount: state.won.amount } });
+        state.won = null;
+        load({ quiet: true });
+      } catch (err) {
+        btn.disabled = false;
+        $("#wonErr").innerHTML = `<div class="err">${L("ما انحفظ", "Not saved")}: ${esc(err.message)}</div>`;
+      }
+    };
+  }
+  box.querySelectorAll("[data-handle]").forEach((b) => (b.onclick = async () => {
+    b.disabled = true;
+    await api(`/api/comments/${encodeURIComponent(b.dataset.handle)}/handled`, { method: "POST", body: { handled: b.dataset.v === "1" } });
+    load({ quiet: true });
+  }));
+}
+
+function storyCard(x) {
+  const time = new Date(x.timestamp).toLocaleString(LOC, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+  return `<div class="card post">
+    <div class="thumb">
+      ${x.image ? `<img src="/stories/${esc(x.image)}" alt="" loading="lazy" onerror="this.remove()">` : `<span>${x.media_type === "VIDEO" ? L("فيديو", "Video") : L("صورة", "Photo")}</span>`}
+      <span class="badge ${x.live ? "live" : ""}">${x.live ? L("شغالة · ", "Live · ") : ""}${time}</span>
+    </div>
+    <div class="body"><div class="stats">
+      <span>${L("الوصول", "Reach")} <b>${num(x.reach)}</b></span><span>${L("إجراء", "Actions")} <b>${pct(x.action_rate)}</b></span>
+      <span>${L("رابط", "Link")} <b>${num(x.link_clicks)}</b></span><span>${L("ردود", "Replies")} <b>${num(x.replies)}</b></span>
+      <span>${L("زيارات", "Visits")} <b>${num(x.profile_visits)}</b></span><span>${L("خروج", "Exits")} <b>${pct(x.exit_rate)}</b></span>
+    </div></div>
+  </div>`;
+}
+
+const SOURCES = ["بوست أو ريل", "ستوري", "تعليق", "الخاص", "واتساب", "رابط البايو", "إحالة أو معرفة", "إعلان ممول", "غير معروف"];
+
+function renderIdeas(I) {
+  const box = $("#ideas");
+  const when = (t) => new Date(t * 1000).toLocaleDateString(LOC, { day: "numeric", month: "short" });
+  box.innerHTML = `
+    <div class="row" style="display:flex;gap:8px;align-items:flex-start">
+      <textarea id="ideaText" rows="2" maxlength="1000" placeholder="فكرة بوست، جملة تبدأ فيها، سؤال سمعته من عميل…" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px;resize:vertical"></textarea>
+      <button class="btn primary" id="ideaAdd">أضف</button>
+    </div>
+    <div id="ideaErr"></div>
+    ${I.open.length ? `<table class="ideas-t" style="margin-top:12px"><tbody>${I.open.map((x) => `<tr>
+      <td style="width:100%"><div style="white-space:pre-wrap" data-notr>${esc(x.text)}</div>
+        <div class="sub" style="font-size:12px;margin-top:2px">${x.topic !== "أخرى" ? `<span class="badge"${x.niche ? "" : ` style="background:var(--surface-2);color:var(--text-2)"`}>${esc(x.topic)}</span> ` : ""}${x.source === "telegram" ? L("✈️ من تيليجرام · ", "✈️ From Telegram · ") : ""}${when(x.created_at)}</div></td>
+      <td style="white-space:nowrap;vertical-align:top"><div class="lead-acts">
+        <a class="btn sm" target="_blank" href="${esc(carouselUrl({ hook: x.text.split("\n")[0].slice(0, 120), topic: x.topic }))}" title="ابنِ منها كاروسيل">كاروسيل ↗</a>
+        <button class="btn sm primary" data-idea="${x.id}" data-s="used" title="نشرتها — تنتقل لقائمة المستخدمة">استخدمتها ✓</button>
+        <button class="btn sm" data-idea-del="${x.id}" title="احذف الفكرة">✕</button></div></td></tr>`).join("")}</tbody></table>`
+      : `<p class="sub" style="margin:12px 0 0">ما فيه أفكار للحين. أي فكرة تضيفها تنصنّف حسب الموضوع، وخطة النشر تقترح منها في الأيام اللي تناسبها.</p>`}
+    ${I.used.length ? `<details style="margin-top:12px"><summary class="sub">${L("اللي استخدمتها", "Used")} (${num(I.used.length)})</summary>
+      <table style="margin-top:8px"><tbody>${I.used.map((x) => `<tr><td class="sub" data-notr>${esc(x.text.split("\n")[0].slice(0, 120))}</td>
+        <td style="white-space:nowrap"><button class="btn sm" data-idea="${x.id}" data-s="new">رجّعها</button></td></tr>`).join("")}</tbody></table></details>` : ""}`;
+  const add = async () => {
+    const t = $("#ideaText").value.trim();
+    if (!t) return;
+    $("#ideaAdd").disabled = true;
+    try { await api(`/api/accounts/${encodeURIComponent(state.id)}/ideas`, { method: "POST", body: { text: t } }); $("#ideaText").value = ""; load({ quiet: true }); }
+    catch (err) { $("#ideaErr").innerHTML = `<div class="err">${esc(err.message)}</div>`; $("#ideaAdd").disabled = false; }
+  };
+  $("#ideaAdd").onclick = add;
+  $("#ideaText").onkeydown = (e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) add(); };
+  box.querySelectorAll("[data-idea]").forEach((b) => (b.onclick = async () => { b.disabled = true; try { await api(`/api/ideas/${b.dataset.idea}`, { method: "POST", body: { status: b.dataset.s } }); } finally { load({ quiet: true }); } }));
+  box.querySelectorAll("[data-idea-del]").forEach((b) => (b.onclick = async () => { if (!confirm(L("تحذف الفكرة؟", "Delete this idea?"))) return; try { await api(`/api/ideas/${b.dataset.ideaDel}`, { method: "DELETE" }); } finally { load({ quiet: true }); } }));
+}
+
+function renderRecycle(R) {
+  const box = $("#recycle");
+  if (!R.total && !R.used.length) {
+    box.innerHTML = `<div class="card"><p class="sub" style="margin:0">${L(`ما فيه بوستات قديمة أقوى بوضوح من عادتك${R.similar ? ` غير اللي نزّلت شي قريب منها مؤخراً (${num(R.similar)})` : ""}.`, `No older posts clearly beat your usual${R.similar ? `, apart from ones you recently posted something similar to (${num(R.similar)})` : ""}.`)}</p></div>`;
+    return;
+  }
+  const f = state.recycleFilter || "all", shown = state.recycleMore ? 24 : 6;
+  const list = R.open.filter((x) => f === "all" || (f === "niche" ? x.niche : !x.niche));
+  const times = (x) => (x.times >= 10 ? L("أكثر من ١٠ أضعاف", "10×+") : x.times >= 3 ? L(`${num(x.times, 1)} أضعاف`, `${num(x.times, 1)}×`) : `${num(x.times, 1)}×`);
+  const card = (x) => {
+    const date = new Date(x.timestamp).toLocaleDateString(LOC, { month: "short", year: "numeric" });
+    // روابط صور البوستات القديمة تنتهي عند انستجرام، فالبطاقة بدون صورة
+    return `<div class="card post">
+      <div class="body">
+        <div class="sub" style="font-size:12.5px;margin:0 0 4px">${esc(tr(x.kind_name))} · ${date}</div>
+        <div class="cap" data-notr>${esc(x.caption) || `<i>${L("بدون كابشن", "No caption")}</i>`}</div>
+        <div class="stats"><span>${x.why === "وصول" ? L("الوصول", "Reach") : L("الاهتمام", "Intent")} <b>${times(x)}</b> ${L("عادتك وقتها", "your usual then")}</span><span>${L("الوصول", "Reach")} <b>${num(x.reach)}</b></span></div>
+        <div class="why"><span class="badge"${x.niche ? "" : ` style="background:var(--surface-2);color:var(--text-2)"`}>${esc(x.topic)}</span> ${esc(x.how)}</div>
+        <div class="acts"><a href="${esc(x.permalink)}" target="_blank" rel="noopener">فتح ↗</a>
+          <button class="btn sm primary" data-rec="${esc(x.id)}" data-s="used" title="نزّلتها من جديد — تختفي من القائمة">نزّلتها ✓</button>
+          <button class="btn sm" data-rec="${esc(x.id)}" data-s="skip">ما تناسب</button></div>
+      </div></div>`;
+  };
+  box.innerHTML = `
+    <div class="leads-head"><div class="stats"><span class="pill">${L(`${num(R.total)} فكرة`, `${num(R.total)} ${plural(R.total, "idea", "ideas")}`)}</span>${R.similar ? `<span class="pill" title="${L("نزّلت بوست كلامه قريب منها في آخر ٣ شهور", "You posted something with similar wording in the last 3 months")}">${L(`${num(R.similar)} نزّلت شي قريب منها`, `${num(R.similar)} already reposted in similar form`)}</span>` : ""}</div>
+      <div class="chips" id="recFilter">
+        <button data-f="all" class="${f === "all" ? "on" : ""}">الكل</button>
+        <button data-f="niche" class="${f === "niche" ? "on" : ""}">${L("عن مجالك", "Your niche")} (${num(R.open.filter((x) => x.niche).length)})</button>
+        <button data-f="general" class="${f === "general" ? "on" : ""}">${L("محتوى عام", "General")} (${num(R.open.filter((x) => !x.niche).length)})</button>
+      </div></div>
+    ${list.length ? `<div class="grid posts recycle">${list.slice(0, shown).map(card).join("")}</div>` : `<p class="sub">ما فيه أفكار هنا.</p>`}
+    ${list.length > shown ? `<p style="text-align:center"><button class="btn" id="recMore">عرض المزيد</button></p>` : ""}
+    ${R.used.length ? `<details style="margin-top:12px"><summary class="sub">${L("اللي نزّلتها من جديد", "Reposted")} (${num(R.used.length)})</summary>
+      <table style="margin-top:8px"><tbody>${R.used.map((x) => `<tr><td><a href="${esc(x.permalink)}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">${x.caption ? `<span data-notr>${esc(x.caption)}</span>` : L("فتح ↗", "Open ↗")}</a></td>
+        <td style="white-space:nowrap"><button class="btn sm" data-rec="${esc(x.id)}" data-s="">تراجع</button></td></tr>`).join("")}</tbody></table></details>` : ""}`;
+  box.querySelectorAll("#recFilter button").forEach((b) => (b.onclick = () => { state.recycleFilter = b.dataset.f; renderRecycle(R); }));
+  if ($("#recMore")) $("#recMore").onclick = () => { state.recycleMore = true; renderRecycle(R); };
+  box.querySelectorAll("[data-rec]").forEach((b) => (b.onclick = async () => {
+    b.disabled = true;
+    try { await api(`/api/accounts/${encodeURIComponent(state.id)}/recycle/${encodeURIComponent(b.dataset.rec)}`, { method: "POST", body: { status: b.dataset.s || null } }); }
+    finally { load({ quiet: true }); }
+  }));
+}
+
+const STATUS = { done: "تحقق 🏆", ahead: "متقدم ✓", close: "قريب من الوتيرة", behind: "متأخر", early: "بدري على الحكم" };
+const goalAmount = (x, g) => (g.metric === "revenue" ? `${num(x)} ${L("ريال", "SAR")}` : num(Math.round(x)));
+
+function renderGoals(G) {
+  const box = $("#goals");
+  const nextMonth = (() => { const [y, m] = G.month.split("-").map(Number); return new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 7); })();
+  if (!G.goals.length) {
+    box.innerHTML = `<div class="goals-head"><p class="sub" style="margin:0">${L(`ما حددت أهداف لـ ${esc(G.month_name)}. حط هدف للمتابعين أو التسجيلات أو الإيراد، واللوحة تقول لك إذا أنت على الوتيرة وكم تحتاج باليوم.`, `No goals set for ${esc(tr(G.month_name))}. Set a goal for followers, sign-ups or revenue, and the dashboard will tell you if you’re on pace and how much you need per day.`)}</p>
+      <div style="display:flex;gap:8px"><button class="btn primary" data-goal-month="${G.month}">حدد أهداف الشهر</button>${G.days_left <= 7 ? `<button class="btn" data-goal-month="${nextMonth}">أهداف الشهر الجاي</button>` : ""}</div></div>`;
+  } else {
+    box.innerHTML = `<div class="goals-head"><span class="sub">الخط الصغير على الشريط = وين المفروض تكون الحين</span>
+      <div style="display:flex;gap:8px">${G.days_left <= 7 ? `<button class="btn sm" data-goal-month="${nextMonth}">أهداف الشهر الجاي</button>` : ""}<button class="btn sm" data-goal-month="${G.month}">تعديل ✎</button></div></div>
+    ${G.goals.map((g) => `<div class="goal-row">
+      <div class="goal-top"><div><b>${esc(g.name)}</b> <span class="sub">${goalAmount(g.actual, g)} ${L("من", "of")} ${goalAmount(g.target, g)} (${pct(g.progress, 0)})</span></div>
+        <span class="gstat ${g.status}">${STATUS[g.status]}</span></div>
+      <div class="gbar" title="${L(`المفروض تكون عند ${goalAmount(g.expected, g)} الحين`, `You should be at ${goalAmount(g.expected, g)} by now`)}"><i style="width:${Math.min(100, g.progress * 100)}%"></i>${g.status !== "done" ? `<span class="mark" style="inset-inline-start:${Math.min(100, (G.elapsed / G.days) * 100)}%"></span>` : ""}</div>
+      <div class="sub" style="font-size:13px">${g.status === "done" ? L(`حققته قبل نهاية الشهر بـ ${num(G.days_left)} يوم.`, `Hit it with ${num(G.days_left)} ${plural(G.days_left, "day", "days")} to spare.`)
+        : `${g.projection != null && g.status !== "early" ? L(`لو كملت كذا توصل ${goalAmount(g.projection, g)}. `, `At this pace you’ll reach ${goalAmount(g.projection, g)}. `) : ""}${g.per_day != null ? L(`تحتاج ${goalAmount(g.metric === "revenue" || g.per_day >= 3 ? g.per_day : g.per_week, g)} ${g.metric === "revenue" || g.per_day >= 3 ? "باليوم" : "بالأسبوع"} عشان تلحق.`, `You need ${goalAmount(g.metric === "revenue" || g.per_day >= 3 ? g.per_day : g.per_week, g)} ${g.metric === "revenue" || g.per_day >= 3 ? "a day" : "a week"} to catch up.`) : ""}`}
+        ${g.note ? `<span style="color:var(--muted)" data-notr>· ${esc(g.note)}</span>` : ""}</div>
+    </div>`).join("")}`;
+  }
+  box.querySelectorAll("[data-goal-month]").forEach((b) => (b.onclick = () => openGoals(b.dataset.goalMonth, G.month, nextMonth)));
+}
+
+// التجارب: الشغالة ووين وصلت، والمقترحة من أرقامك، واللي خلصت بنتيجتها
+const EXP_VERDICT = { won: "نفعت ✓", lost: "ما نفعت", same: "ما فرقت", early: "ما فيه بوستات كفاية" };
+const fmtDay = (d) => new Date(d + "T12:00:00Z").toLocaleDateString(LOC, { day: "numeric", month: "long", timeZone: "UTC" });
+function renderExperiments(X) {
+  const box = $("#experiments");
+  const lift = (x) => (x == null ? "—" : Math.abs(x) < 0.05 ? `<span class="delta flat">${L("نفسه", "Same")}</span>`
+    : `<span class="delta ${x > 0 ? "up" : "down"}">${x > 0 ? "▲" : "▼"} ${x >= 0.95 ? `${num(1 + x, 1)}×` : num(Math.abs(x) * 100) + PCT}</span>`);
+  const row = (e) => {
+    const chip = e.done ? `<span class="gstat ${e.verdict}">${EXP_VERDICT[e.verdict]}</span>`
+      : `<span class="gstat run">${L(`شغالة · باقي ${num(Math.max(0, e.days_left))} ${e.days_left >= 3 && e.days_left <= 10 ? "أيام" : "يوم"}`, `Running · ${num(Math.max(0, e.days_left))} ${plural(Math.max(0, e.days_left), "day", "days")} left`)}</span>${e.verdict !== "early" ? ` <span class="gstat ${e.verdict}">${L("للحين", "So far")}: ${EXP_VERDICT[e.verdict]}</span>` : ""}`;
+    const elapsed = Math.min(1, (e.days - Math.max(0, e.days_left)) / e.days);
+    return `<div class="exp">
+      <div class="goal-top"><div><b data-notr>${esc(e.name)}</b> <span class="badge">${esc(e.kind_name)}</span></div><div>${chip}</div></div>
+      <div class="sub" style="font-size:13px">${L(`من ${fmtDay(e.start)} إلى ${fmtDay(e.end)}`, `${fmtDay(e.start)} – ${fmtDay(e.end)}`)}${e.note ? ` · <span data-notr>${esc(e.note)}</span>` : ""}</div>
+      ${e.done ? "" : `<div class="gbar"><i style="width:${elapsed * 100}%"></i></div>`}
+      ${e.verdict !== "early" ? `<div class="nums"><span>${L("الوصول", "Reach")} ${lift(e.reach)}</span>${e.intent != null ? `<span>${L("الاهتمام", "Intent")} ${lift(e.intent)}</span>` : ""}${e.ret != null ? `<span>${L("نسبة المشاهدة", "Watch rate")} ${lift(e.ret)}</span>` : ""}
+        ${e.follows_per_day != null && e.follows_before != null ? `<span>${L("متابعين جدد باليوم", "New followers/day")} ${num(e.follows_per_day, 1)} <span class="sub">(${L("قبلها", "before")} ${num(e.follows_before, 1)})</span></span>` : ""}</div>` : ""}
+      <div style="font-size:14px">${esc(e.text)}</div>
+      ${e.advice ? `<div style="font-size:14px;margin-top:4px"><b>${esc(e.advice)}</b></div>` : ""}
+      ${e.off_note ? `<div class="sub" style="font-size:12.5px;margin-top:4px">${esc(e.off_note)}</div>` : ""}
+      <div class="acts">${e.done ? "" : `<button class="btn sm" data-exp-stop="${e.id}">وقّفها الحين</button>`}<button class="btn sm" data-exp-del="${e.id}">حذف</button></div>
+    </div>`;
+  };
+  const list = [...X.running, ...X.finished];
+  box.innerHTML = `<div class="goals-head"><span class="sub">${X.running.length ? L(`${num(X.running.length)} ${X.running.length === 1 ? "تجربة شغالة" : "تجارب شغالة"}. جرّب شي واحد بالمرة عشان تعرف وش اللي فرق.`, `${num(X.running.length)} ${plural(X.running.length, "experiment", "experiments")} running. Test one thing at a time so you know what made the difference.`) : L("ما عندك تجربة شغالة.", "No experiments running.")}</span>
+      <button class="btn sm primary" id="expNew">+ تجربة جديدة</button></div>
+    ${X.suggestions.length ? `<div class="exp-sug">${X.suggestions.map((g, i) => `<div class="card"><b>${esc(X.kinds[g.kind].name)}${g.param && g.kind !== "short_reels" ? ` <span data-notr>${esc(g.param)}</span>` : ""}</b><p>${esc(g.why)}</p>
+      <div><button class="btn sm" data-exp-sug="${i}">ابدأها لأسبوعين</button></div></div>`).join("")}</div>` : ""}
+    ${list.length ? `<div style="margin-top:10px">${list.map(row).join("")}</div>` : ""}`;
+  $("#expNew").onclick = () => openExp();
+  box.querySelectorAll("[data-exp-sug]").forEach((b) => (b.onclick = async () => {
+    const g = X.suggestions[+b.dataset.expSug];
+    b.disabled = true;
+    try { await api(`/api/accounts/${encodeURIComponent(state.id)}/experiments`, { method: "POST", body: { kind: g.kind, param: g.param, days: 14 } }); load({ quiet: true }); }
+    catch (err) { b.disabled = false; alert(err.message); }
+  }));
+  box.querySelectorAll("[data-exp-stop]").forEach((b) => (b.onclick = async () => {
+    if (!confirm(L("توقّف التجربة الحين؟ النتيجة تنحسب على البوستات اللي نزلت لين أمس.", "Stop the experiment now? The result will be based on posts published up to yesterday."))) return;
+    try { await api(`/api/experiments/${b.dataset.expStop}/stop`, { method: "POST" }); load({ quiet: true }); } catch (err) { alert(err.message); }
+  }));
+  box.querySelectorAll("[data-exp-del]").forEach((b) => (b.onclick = async () => {
+    if (!confirm(L("تحذف التجربة؟ بوستاتك ما تتأثر.", "Delete this experiment? Your posts won’t be affected."))) return;
+    try { await api(`/api/experiments/${b.dataset.expDel}`, { method: "DELETE" }); load({ quiet: true }); } catch (err) { alert(err.message); }
+  }));
+}
+
+const EXP_PARAM = {
+  no_tag: [L("الهاشتاق اللي بتشيله", "Hashtag to drop"), PROFILE.niche_tag_example, L("لا تحطه في أي بوست خلال التجربة.", "Don’t use it in any post during the experiment.")],
+  with_tag: [L("الهاشتاق الجديد", "New hashtag"), "#فويس_اوفر", L("حطه في كل بوست خلال التجربة.", "Use it in every post during the experiment.")],
+  short_reels: [L("أقصى طول للريل (ثانية)", "Max reel length (seconds)"), "60", L("الريلز الأقصر من هالرقم تنحسب في التجربة.", "Reels shorter than this count toward the experiment.")],
+  post_time: [L("الوقت (من ساعة إلى ساعة، ٢٤ ساعة)", "Time window (from hour to hour, 24h)"), "20-23", L("مثلاً 20-23 يعني من ٨ لين ١١ بالليل.", "e.g. 20-23 means 8 to 11 pm.")],
+};
+function openExp() {
+  const sync = () => {
+    const c = EXP_PARAM[$("#expKind").value];
+    $("#expParamBox").hidden = !c;
+    if (c) { $("#expParamLabel").textContent = c[0]; $("#expParam").placeholder = c[1]; $("#expParamHint").textContent = c[2]; }
+    if ($("#expKind").value === "short_reels" && !$("#expParam").value) $("#expParam").value = "60";
+  };
+  $("#expKind").onchange = () => { $("#expParam").value = ""; sync(); };
+  $("#expKind").value = "no_tag"; $("#expParam").value = ""; $("#expName").value = ""; $("#expDays").value = "14"; $("#expErr").innerHTML = "";
+  sync();
+  expDlg.showModal();
+}
+$("#expSave").onclick = async () => {
+  if ($("#expSave").disabled) return;
+  $("#expSave").disabled = true;
+  try {
+    await api(`/api/accounts/${encodeURIComponent(state.id)}/experiments`, { method: "POST", body: { kind: $("#expKind").value, param: $("#expParam").value, name: $("#expName").value, days: $("#expDays").value } });
+    expDlg.close();
+    load({ quiet: true });
+  } catch (err) { $("#expErr").innerHTML = `<div class="err">${esc(err.message)}</div>`; }
+  finally { $("#expSave").disabled = false; }
+};
+
+async function openGoals(month, cur, next) {
+  $("#goalMonth").innerHTML = [cur, next].map((m) => `<option value="${m}" ${m === month ? "selected" : ""}>${m === cur ? L("هالشهر", "This month") : L("الشهر الجاي", "Next month")} (${m})</option>`).join("");
+  const fill = async (m) => {
+    const st = await api(`/api/accounts/${encodeURIComponent(state.id)}/goals?month=${m}`);
+    for (const [k, id] of [["followers", "gFollowers"], ["sales", "gSales"], ["revenue", "gRevenue"]]) {
+      $("#" + id).value = st.targets[k] ?? "";
+      $("#" + id + "Hint").textContent = st.suggest[k] ? L(`اقتراح: ${num(st.suggest[k])} (الشهر اللي قبله + ٢٠٪)`, `Suggested: ${num(st.suggest[k])} (last month + 20%)`) : "";
+    }
+  };
+  $("#goalMonth").onchange = (e) => fill(e.target.value);
+  $("#goalErr").innerHTML = "";
+  await fill(month);
+  goalDlg.showModal();
+}
+
+$("#goalSave").onclick = async () => {
+  const targets = { followers: $("#gFollowers").value, sales: $("#gSales").value, revenue: $("#gRevenue").value };
+  try {
+    await api(`/api/accounts/${encodeURIComponent(state.id)}/goals`, { method: "PUT", body: { month: $("#goalMonth").value, targets } });
+    goalDlg.close();
+    load({ quiet: true });
+  } catch (err) { $("#goalErr").innerHTML = `<div class="err">${esc(err.message)}</div>`; }
+};
+
+function renderTopics(t) {
+  if (!t?.ready) {
+    $("#topics").innerHTML = `<div class="card"><p class="sub" style="margin:0">${L(`التحليل يحتاج ١٥ بوست على الأقل فيها أرقام وصول (عندك ${num(t?.posts || 0)}).`, `This needs at least 15 posts with reach data (you have ${num(t?.posts || 0)}).`)}</p></div>`;
+    return;
+  }
+  const lift = (x) => (x == null ? `<span class="delta flat">—</span>` : Math.abs(x) < 0.05 ? `<span class="delta flat">${L("عادي", "Normal")}</span>`
+    : `<span class="delta ${x > 0 ? "up" : "down"}">${x > 0 ? "▲" : "▼"} ${num(Math.abs(x) * 100)}${PCT}</span>`);
+  const leads = (x) => (x.leads ? `${num(x.leads)} <span class="sub" style="font-size:12px">(${L(`${num(x.leads_per_post, 2)} للبوست`, `${num(x.leads_per_post, 2)} per post`)})</span>` : `<span class="sub">—</span>`);
+  const hasSales = t.topics.some((x) => x.sales);
+  const tags = (name) => [[t.best.reach, "أعلى وصول"], [t.best.intent, "أعلى اهتمام"], [t.best.sell, "يجيب عملاء"]]
+    .filter(([n]) => n === name).map(([, l]) => ` <span class="badge"${l === "يجيب عملاء" ? ` style="background:var(--good-soft);color:var(--good)"` : ""}>${tr(l)}</span>`).join("");
+  const [mine, gen] = t.sides;
+  const side = (x) => `<div class="card kpi"><div class="label">${esc(x.name)}</div>
+    <div class="value">${num(x.n)} <small class="sub" style="font-size:13px">${L("بوست", plural(x.n, "post", "posts"))} (${pct(x.share, 0)})</small></div>
+    <div class="sub" style="margin-top:6px">${L("الوصول", "Reach")} ${lift(x.reach_lift)} · ${L("الاهتمام", "Intent")} ${lift(x.intent_lift)}</div>
+    <div class="sub">${L("أسئلة السعر والتسجيل", "Price & sign-up questions")}: ${leads(x)}${x.sales ? L(` · ${num(x.sales)} تسجيل`, ` · ${num(x.sales)} ${plural(x.sales, "sign-up", "sign-ups")}`) : ""}</div></div>`;
+  $("#topics").innerHTML = `
+  <div class="grid two" style="margin-bottom:14px">${side(mine)}${side(gen)}</div>
+  <div class="card scroll">
+    <table><thead><tr><th>الموضوع</th><th>البوستات</th><th>الوصول</th><th>الاهتمام</th><th>أسئلة السعر والتسجيل</th>${hasSales ? "<th>تسجيلات</th>" : ""}<th>أنجح بوست</th></tr></thead>
+    <tbody>${t.topics.map((x) => `<tr class="${x.enough ? "" : "thin"}">
+      <td><b>${esc(x.name)}</b>${tags(x.name)}${x.enough ? "" : ` <span class="sub" style="font-size:12px">عينة قليلة</span>`}</td>
+      <td>${num(x.n)}</td><td>${lift(x.reach_lift)}</td><td>${lift(x.intent_lift)}</td><td>${leads(x)}</td>${hasSales ? `<td>${x.sales ? num(x.sales) : "—"}</td>` : ""}
+      <td>${x.top?.permalink ? `<a href="${esc(x.top.permalink)}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">${x.top.caption ? `<span data-notr>${esc(x.top.caption)}</span>` : L("فتح ↗", "Open ↗")}</a>` : "—"}</td></tr>`).join("")}</tbody></table>
+    <p class="sub" style="margin-bottom:0">${L(`الموضوع ينعرف من كلمات الكابشن. الوصول والاهتمام مقارنة ببوستات نفس النوع اللي نزلت قريب منها، والحكم بس على المواضيع اللي فيها ٥ بوستات أو أكثر. أسئلة السعر والتسجيل من التعليقات اللي سحبتها الأداة${t.leads < 5 ? "، وللحين قليلة فما نقدر نحكم أي موضوع يبيع. كل ما سجّلت «سجّل» للعملاء أو أضفت تسجيلات مربوطة ببوست، يصير أدق" : ""}.`, `Topics are detected from caption words. Reach and intent are compared with posts of the same type published around the same time, and only topics with 5+ posts get a verdict. Price and sign-up questions come from the comments the tool pulled${t.leads < 5 ? ", and there aren’t enough yet to tell which topic sells. The more you mark leads as “Signed up” or add sales linked to a post, the more accurate this gets" : ""}.`)}</p>
+  </div>`;
+}
+
+// مدة المشاهدة في الريلز: كم يكملون، وأي طول وبداية وموضوع يخليهم يكملون
+function renderWatch(w) {
+  if (!w?.ready) {
+    $("#watch").innerHTML = `<div class="card"><p class="sub" style="margin:0">${L(`التحليل يحتاج ١٠ ريلز على الأقل فيها مدة مشاهدة آخر سنة (عندك ${num(w?.reels || 0)}).`, `This needs at least 10 reels with watch-time data from the last year (you have ${num(w?.reels || 0)}).`)}</p></div>`;
+    return;
+  }
+  const P = w.by_pct, sc = (x) => (P ? pct(x, 0) : `${num(x, 1)} ${L("ث", "s")}`);
+  const lift = (x) => (x == null ? `<span class="delta flat">—</span>` : Math.abs(x) < 0.05 ? `<span class="delta flat">${L("عادي", "Normal")}</span>`
+    : `<span class="delta ${x > 0 ? "up" : "down"}">${x > 0 ? "▲" : "▼"} ${num(Math.abs(x) * 100)}${PCT}</span>`);
+  const secs = (x) => (x >= 60 ? `${Math.floor(x / 60)}:${String(Math.round(x % 60)).padStart(2, "0")} ${L("د", "min")}` : `${num(x)} ${L("ث", "s")}`);
+  const table = (title, rows, note) => `<div class="card scroll"><h3>${title}</h3>
+    ${rows.length ? `<table><thead><tr><th></th><th>ريلز</th><th>${P ? L("يشوفون", "Watched") : L("مدة المشاهدة", "Watch time")}</th><th>مقارنة بعادتك</th><th>الوصول</th></tr></thead><tbody>${rows.map((x) => `<tr class="${x.enough ? "" : "thin"}">
+      <td><b>${esc(tr(x.name))}</b>${x.enough ? "" : ` <span class="sub" style="font-size:12px">عينة قليلة</span>`}</td><td>${num(x.n)}</td><td><b>${sc(x.score)}</b></td><td>${lift(x.lift)}</td><td>${lift(x.reach_lift)}</td></tr>`).join("")}</tbody></table>` : `<p class="sub">ما فيه بيانات كفاية.</p>`}
+    ${note ? `<p class="sub" style="margin-bottom:0">${note}</p>` : ""}</div>`;
+  const reel = (r) => `<li><a href="${esc(r.permalink)}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">${r.caption ? `<span data-notr>${esc(r.caption)}</span>` : L("بدون كابشن", "No caption")}</a>
+    <span class="sub" style="white-space:nowrap"> · ${P ? `${pct(r.ret, 0)} ${L("من", "of")} ${secs(r.duration)}` : secs(r.watch)}</span></li>`;
+  $("#watch").innerHTML = `
+  <div class="grid kpis" style="margin-bottom:14px">
+    <div class="card kpi"><div class="label">متوسط مدة المشاهدة</div><div class="value">${num(w.median_watch, 1)} <small class="sub" style="font-size:13px">${L("ثانية", "sec")}</small></div><div class="prev">${L(`من ${num(w.reels)} ريل آخر سنة`, `From ${num(w.reels)} ${plural(w.reels, "reel", "reels")} in the last year`)}</div></div>
+    ${P ? `<div class="card kpi"><div class="label">كم يشوفون من الريل</div><div class="value">${pct(w.median_ret, 0)}</div><div class="prev">بالمتوسط</div></div>
+    <div class="card kpi"><div class="label">طول ريلزك عادةً</div><div class="value">${secs(w.median_duration)}</div><div class="prev">${w.median_duration > 60 ? "أطول من اللي يكملونه" : "&nbsp;"}</div></div>` : ""}
+    ${w.reach_link != null ? `<div class="card kpi"><div class="label">وصول اللي يكملونها</div><div class="value">${w.reach_link >= 0.95 ? `${num(1 + w.reach_link, 1)}×` : lift(w.reach_link)}</div><div class="prev">مقارنة باللي يطلعون منها بدري</div></div>` : ""}
+  </div>
+  ${w.lessons.length ? `<div class="card advice" style="margin-bottom:14px"><h3 style="margin-top:0">وش تتعلم منها</h3><ul>${w.lessons.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
+  <div class="grid two">
+    ${P ? table("حسب طول الريل", w.lengths, "الريل القصير طبيعي الناس يشوفون نسبة أكبر منه، فشوف عمود الوصول بعد.") : ""}
+    ${table("حسب أول جملة في الكابشن", w.hooks)}
+    ${table("حسب الموضوع", w.topics)}
+  </div>
+  <div class="grid two" style="margin-top:14px">
+    <div class="card"><h3>الريلز اللي كمّلوها أكثر</h3><p class="sub">آخر ٦ شهور. شوف وش أول ٣ ثواني فيها.</p><ol style="margin:0;padding-inline-start:20px;display:grid;gap:6px">${w.top.map(reel).join("")}</ol></div>
+    ${w.bottom.length ? `<div class="card"><h3>اللي طلعوا منها بدري</h3><p class="sub">آخر ٦ شهور.</p><ol style="margin:0;padding-inline-start:20px;display:grid;gap:6px">${w.bottom.map(reel).join("")}</ol></div>` : ""}
+  </div>
+  <p class="sub">${L(`${P ? "النسبة = متوسط مدة المشاهدة ÷ طول الريل. الطول نقراه من ملف الفيديو نفسه" : "طول الريلز للحين ينجاب، فالمقارنة بالثواني"}${w.pending ? ` (باقي ${num(w.pending)} ريل ينجاب طولها)` : ""}. المقارنة بريلزك آخر سنة، والحكم بس على المجموعات اللي فيها ٤ ريلز أو أكثر.`, `${P ? "Rate = average watch time ÷ reel length. Length is read from the video file itself" : "Reel lengths are still being fetched, so this compares seconds"}${w.pending ? ` (${num(w.pending)} ${plural(w.pending, "reel", "reels")} still pending)` : ""}. Compared with your reels from the last year; only groups with 4+ reels get a verdict.`)}</p>`;
+}
+
+function renderTags(h) {
+  if (!h.ready) {
+    $("#tags").innerHTML = `<div class="card"><p class="sub" style="margin:0">${L(`التحليل يحتاج ٢٠ بوست على الأقل فيها أرقام وصول (عندك ${num(h.posts)}).`, `This needs at least 20 posts with reach data (you have ${num(h.posts)}).`)}</p></div>`;
+    return;
+  }
+  const lift = (x) => (x == null ? `<span class="delta flat">—</span>` : Math.abs(x) < 0.05 ? `<span class="delta flat">${L("عادي", "Normal")}</span>`
+    : `<span class="delta ${x > 0 ? "up" : "down"}">${x > 0 ? "▲" : "▼"} ${num(Math.abs(x) * 100)}${PCT}</span>`);
+  const max = Math.max(0.01, ...h.tags.map((t) => Math.abs(t.reach_lift)));
+  $("#tags").innerHTML = `
+  <div class="grid two">
+    <div class="card scroll"><h3>كل هاشتاق مقارنة بعادتك</h3>
+      <p class="sub">${L(`الهاشتاقات اللي استخدمتها في ${num(h.min_posts)} بوستات أو أكثر. الوصول والاهتمام لبوستاتها مقارنة ببوستات نفس النوع اللي نزلت قريب منها.`, `Hashtags you’ve used in ${num(h.min_posts)}+ posts. Reach and intent of those posts vs. posts of the same type published around the same time.`)}</p>
+      ${h.tags.length ? `<table><thead><tr><th>الهاشتاق</th><th>البوستات</th><th>الوصول</th><th>الاهتمام</th></tr></thead><tbody>${h.tags.map((t) => `<tr>
+        <td><b dir="auto" style="unicode-bidi:isolate" data-notr>${esc(t.tag)}</b> <span class="sub" style="font-size:12px">${esc(t.category)}</span></td>
+        <td>${num(t.n)}</td><td>${lift(t.reach_lift)}</td><td>${lift(t.intent_lift)}</td></tr>`).join("")}</tbody></table>`
+        : `<p class="sub">${L(`ما فيه هاشتاق مستخدم في ${num(h.min_posts)} بوستات أو أكثر.`, `No hashtag used in ${num(h.min_posts)}+ posts.`)}</p>`}
+    </div>
+    <div class="card scroll"><h3>كم هاشتاق؟</h3>
+      <p class="sub">${L(`متوسطك ${num(h.avg_count, 1)} هاشتاق بالبوست.`, `You average ${num(h.avg_count, 1)} hashtags per post.`)}</p>
+      <table><thead><tr><th>العدد</th><th>البوستات</th><th>الوصول</th><th>الاهتمام</th></tr></thead><tbody>${h.counts.filter((c) => c.n).map((c) => `<tr>
+        <td>${tr(c.label)}${h.best_count?.label === c.label ? ` <span class="badge">الأفضل</span>` : ""}</td><td>${num(c.n)}</td>
+        <td>${c.reach_lift == null ? `<span class="sub">عينة قليلة</span>` : lift(c.reach_lift)}</td><td>${c.intent_lift == null ? "" : lift(c.intent_lift)}</td></tr>`).join("")}</tbody></table>
+      <h3 style="margin-top:16px">حسب نوع الهاشتاق</h3>
+      <table><thead><tr><th>النوع</th><th>البوستات</th><th>الوصول</th><th>الاهتمام</th></tr></thead><tbody>${h.categories.map((c) => `<tr>
+        <td>${esc(c.name)}</td><td>${num(c.n)}</td><td>${c.reach_lift == null ? `<span class="sub">عينة قليلة</span>` : lift(c.reach_lift)}</td><td>${c.intent_lift == null ? "" : lift(c.intent_lift)}</td></tr>`).join("")}</tbody></table>
+      <p class="sub" style="margin-bottom:0">«عام» مثل #اكسبلور و#foryou، و«مجالك» الهاشتاقات اللي تخص مجالك. هذا ارتباط مو سبب أكيد: الهاشتاق يجي غالباً مع موضوع معيّن، فالموضوع ممكن هو اللي رفع الوصول. انستجرام ما يعطي كم وصل كل بوست من الهاشتاق نفسه.</p>
+    </div>
+  </div>`;
+}
+
+function renderPlan(pl) {
+  if (!pl.ready) {
+    $("#plan").innerHTML = `<div class="card"><p class="sub" style="margin:0">${L(`الخطة تحتاج ٦ بوستات على الأقل في آخر ٩٠ يوم (عندك ${num(pl.posts)}).`, `The plan needs at least 6 posts in the last 90 days (you have ${num(pl.posts)}).`)}</p></div>`;
+    return;
+  }
+  const date = (d) => new Date(d + "T12:00:00Z").toLocaleDateString(LOC, { day: "numeric", month: "short", timeZone: "UTC" });
+  const time = (t) => { const h = +t.slice(0, 2); return LANG === "en" ? `${h % 12 || 12} ${h < 12 ? "am" : "pm"}` : `${h % 12 || 12}${h < 12 ? " الصبح" : h < 15 ? " الظهر" : h < 18 ? " العصر" : h < 20 ? " المغرب" : " الليل"}`; };
+  $("#plan").innerHTML = `
+  <div class="plan">${pl.days.map((d) => d.rest
+    ? `<div class="day rest"><div class="when">${d.day}<span>${date(d.date)}</span></div>راحة</div>`
+    : `<div class="day">
+        <div class="when">${d.day}<span>${date(d.date)}</span></div>
+        <div class="time">${time(d.time)}</div>
+        <div><span class="badge">${esc(d.kind_name)}</span> <span class="goal ${d.goal}" title="${esc(d.goal_note)}">${esc(tr(d.goal))}</span>${d.topic ? ` <span class="sub" style="font-size:12px">· ${esc(tr(d.topic))}</span>` : ""}</div>
+        <div class="hook" data-notr>${esc(d.hook)}${d.idea_link ? ` <a href="${esc(d.idea_link)}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none" title="${esc(d.idea_note || "")}">↗</a>` : ""}</div>
+        ${d.bank_idea ? `<div class="sub" style="font-size:13px;margin-top:4px">💡 ${L("من أفكارك", "From your ideas")}: <span data-notr>${L("«", "“")}${esc(d.bank_idea.text)}${L("»", "”")}</span></div>` : ""}
+        ${d.kind === "CAROUSEL_ALBUM" ? `<a class="btn sm" style="text-decoration:none;margin-top:4px" target="_blank" href="${esc(carouselUrl({ goal: d.goal, topic: d.topic }))}">ابنِ الكاروسيل ↗</a>` : ""}
+        ${d.reel_tip ? `<div class="sub" style="font-size:13px;margin-top:4px">⏱ ${esc(d.reel_tip)}</div>` : ""}
+        ${d.kind === "REELS" ? `<a class="btn sm" style="text-decoration:none;margin-top:4px" target="_blank" href="${esc(carouselUrl({ format: "reel", goal: d.goal, topic: d.topic, hook: d.bank_idea?.text }))}">اكتب السكربت ↗</a>` : ""}
+        ${d.cta ? `<div class="sub" style="margin:0">${esc(d.cta)}</div>` : ""}
+        ${d.hashtags?.length ? `<div class="sub" style="margin:0" data-notr title="${L(`من هاشتاقاتك اللي جات مع ${d.goal === "جذب" ? "وصول" : "اهتمام"} أعلى — اختار اللي يناسب موضوع البوست`, `From your hashtags linked to higher ${d.goal === "جذب" ? "reach" : "intent"} — pick the ones that fit the post`)}">${d.hashtags.map((t) => `<bdi>${esc(t)}</bdi>`).join(" ")}</div>` : ""}
+        <div class="why">${esc(d.why)}</div>
+      </div>`).join("")}</div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:10px">
+    <p class="sub" style="margin:0">${L(`${num(pl.per_week)} بوستات بالأسبوع مثل معدلك. مبنية على ${num(pl.basis.posts)} بوست من آخر ٩٠ يوم${pl.basis.sales_used ? ` و${num(pl.basis.sales)} تسجيل` : "، وبتصير أدق لما تسجّل مبيعاتك"}. الخطة تتحدث كل يوم.`, `${num(pl.per_week)} ${plural(pl.per_week, "post", "posts")} a week, matching your usual pace. Based on ${num(pl.basis.posts)} ${plural(pl.basis.posts, "post", "posts")} from the last 90 days${pl.basis.sales_used ? ` and ${num(pl.basis.sales)} ${plural(pl.basis.sales, "sign-up", "sign-ups")}` : ", and it gets more accurate once you log your sales"}. The plan updates daily.`)}</p>
+    <button class="btn" id="icsBtn">أضفها للتقويم</button>
+  </div>`;
+  $("#icsBtn").onclick = () => downloadIcs(pl);
+}
+
+// ملف تقويم (iPhone والماك وقوقل) فيه موعد كل بوست مع تذكير قبله بنص ساعة
+function downloadIcs(pl) {
+  const utc = (d, t) => new Date(new Date(`${d}T${t}:00+03:00`).getTime()).toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
+  const txt = (s) => String(s || "").replace(/\\/g, "\\\\").replace(/[,;]/g, (c) => "\\" + c).replace(/\n/g, " ");
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
+  const events = pl.days.filter((d) => !d.rest).map((d) => [
+    "BEGIN:VEVENT", `UID:${d.date}-${state.id}@insta-analyzer`, `DTSTAMP:${stamp}`,
+    `DTSTART:${utc(d.date, d.time)}`, `DTEND:${utc(d.date, d.time.replace(/^\d+/, (h) => String(+h + 1).padStart(2, "0")))}`,
+    `SUMMARY:${txt(`📌 ${tr(d.kind_name)} (${tr(d.goal)}${d.topic ? ` · ${tr(d.topic)}` : ""}): ${d.hook}`)}`,
+    `DESCRIPTION:${txt([d.cta, d.hashtags?.join(" "), d.why, d.idea_link].filter(Boolean).join(" — "))}`,
+    "BEGIN:VALARM", "ACTION:DISPLAY", "TRIGGER:-PT30M", `DESCRIPTION:${txt(L("جهّز البوست", "Get the post ready"))}`, "END:VALARM", "END:VEVENT",
+  ].join("\r\n"));
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//insta-analyzer//plan//AR", "CALSCALE:GREGORIAN", ...events, "END:VCALENDAR"].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+  a.download = `${L("خطة-النشر", "posting-plan")}-${pl.days[0].date}.ics`;
+  a.click();
+}
+
+function renderSales(sl) {
+  const k = sl.kpis, pk = sl.prev_kpis;
+  const maxSrc = Math.max(1, ...sl.by_source.map((x) => x.count));
+  const fmtN = (x) => num(x, x % 1 ? 1 : 0);
+  $("#sales").innerHTML = `
+  <div class="card">
+    <h3>أضف تسجيل</h3>
+    <p class="sub">كل ما سجّل أحد أو اشترى منك، أضفه هنا. إذا قال لك أي بوست شافه حدده، وإذا ما تعرف خله فاضي والأداة تقدّر.</p>
+    <form class="sale-form" id="saleForm">
+      <label>التاريخ<input type="date" name="date" value="${isoDate(new Date())}" required></label>
+      <label>عدد المسجلين<input type="number" name="count" min="1" value="1" required></label>
+      <label>المبلغ (ريال)<input type="number" name="amount" min="0" step="any" placeholder="اختياري"></label>
+      <label>من وين جاك؟<select name="source">${SOURCES.map((x) => `<option value="${x}">${x}</option>`).join("")}</select></label>
+      <label class="wide">البوست (إذا تعرفه)<select name="media_id"><option value="">ما أعرف — خل الأداة تقدّر</option>${sl.recent_posts.map((p) => `<option value="${esc(p.id)}" data-notr>${p.date} · ${esc(tr(p.kind_name))} · ${esc(p.caption) || L("بدون كابشن", "No caption")}</option>`).join("")}</select></label>
+      <label class="wide">ملاحظة<input type="text" name="note" maxlength="200" placeholder="مثلاً: الدفعة الجاية، خصم ٢٠٪"></label>
+      <button class="btn primary" type="submit">أضف</button>
+    </form>
+    <div id="saleErr"></div>
+  </div>
+  ${k.entries ? `
+  <div class="grid kpis" style="margin-top:14px">
+    ${kpiCard("المسجلين", k.count, pk.count, num)}
+    ${kpiCard("الإيراد", k.revenue, pk.revenue, (x) => (x == null ? "—" : num(x) + L(" ريال", " SAR")), "مجموع المبالغ اللي كتبتها")}
+    ${kpiCard("متوسط قيمة التسجيل", k.avg_value, pk.avg_value, (x) => (x == null ? "—" : num(x) + L(" ريال", " SAR")))}
+  </div>
+  <div class="grid two" style="margin-top:14px">
+    <div class="card scroll"><h3>أي محتوى جاب تسجيلات؟</h3>
+      <p class="sub">${L(`التسجيل اللي حددت بوسته ينحسب له كامل، والباقي يتوزع على البوستات اللي نزلت خلال ${num(sl.window)} أيام قبله. هذا تقدير مو تتبع دقيق.`, `A sign-up you linked to a post counts fully for that post; the rest are split across posts published in the ${num(sl.window)} days before. This is an estimate, not exact tracking.`)}</p>
+      ${sl.top_posts.length ? `<table><thead><tr><th>البوست</th><th>مسجلين</th><th>الوصول</th></tr></thead><tbody>${sl.top_posts.map((p) => `<tr>
+        <td style="max-width:280px"><span class="badge">${esc(p.kind_name)}</span> <a href="${esc(p.permalink)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none" data-notr>${esc((p.caption || "").split("\n")[0].slice(0, 60)) || "—"}</a></td>
+        <td><b>${fmtN(p.attributed)}</b>${p.direct ? ` <span class="sub" title="${L(`منها ${num(p.direct)} حددت البوست بنفسك`, `${num(p.direct)} of these you linked to the post yourself`)}">(${L(`${num(p.direct)} مؤكد`, `${num(p.direct)} confirmed`)})</span>` : ""}</td>
+        <td>${num(p.reach)}</td></tr>`).join("")}</tbody></table>` : `<p class="sub">ما فيه بوستات قبل التسجيلات في هالفترة.</p>`}
+      ${sl.by_type.some((t) => t.attributed) ? `<h3 style="margin-top:16px">حسب النوع</h3><table><thead><tr><th>النوع</th><th>البوستات</th><th>مسجلين للبوست</th><th>متوسط الوصول</th></tr></thead><tbody>${sl.by_type.map((t) => `<tr>
+        <td><span class="badge">${esc(t.name)}</span></td><td>${num(t.posts)}</td><td><b>${num(t.per_post, 1)}</b></td><td>${num(t.avg_reach)}</td></tr>`).join("")}</tbody></table>` : ""}
+    </div>
+    <div class="card scroll"><h3>من وين يجون؟</h3>
+      <table><thead><tr><th>المصدر</th><th>مسجلين</th><th>الإيراد</th></tr></thead><tbody>${sl.by_source.map((x) => `<tr>
+        <td>${esc(x.source)}</td><td><div class="barcell"><i style="width:${(x.count / maxSrc) * 100}px"></i>${num(x.count)}</div></td><td>${x.revenue ? num(x.revenue) + L(" ريال", " SAR") : "—"}</td></tr>`).join("")}</tbody></table>
+      <h3 style="margin-top:16px">آخر الإدخالات</h3>
+      <div style="max-height:300px;overflow-y:auto"><table><thead><tr><th>التاريخ</th><th>العدد</th><th>المبلغ</th><th>المصدر</th><th></th></tr></thead><tbody>${sl.list.map((x) => `<tr>
+        <td style="white-space:nowrap">${esc(x.date)}</td><td>${num(x.count)}</td><td>${x.amount != null ? num(x.amount) : "—"}</td>
+        <td>${esc(x.source)}${x.post ? `<div class="sub" data-notr>${esc(x.post)}</div>` : ""}${x.note ? `<div class="sub" data-notr>${esc(x.note)}</div>` : ""}</td>
+        <td><button class="btn sm" data-del-sale="${x.id}" title="حذف هالإدخال">حذف</button></td></tr>`).join("")}</tbody></table></div>
+    </div>
+  </div>` : `<div class="card" style="margin-top:14px"><p class="sub" style="margin:0">ما فيه تسجيلات في هالفترة. أول ما تضيف تسجيلات، يطلع لك هنا أي بوست وأي مصدر يجيب مسجلين.</p></div>`}`;
+
+  const form = $("#saleForm");
+  state.salesDirty = false;
+  // «فيه كتابة ما انحفظت» بس إذا الخانات تغيرت عن اللي كانت (عشان التحديث التلقائي ما يوقف للأبد لو رجعتها)
+  const initial = new URLSearchParams(new FormData(form)).toString();
+  form.oninput = form.onchange = () => (state.salesDirty = new URLSearchParams(new FormData(form)).toString() !== initial);
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector("[type=submit], button:not([type=button])");
+    if (btn?.disabled) return;
+    if (btn) btn.disabled = true;
+    const body = Object.fromEntries(new FormData(form));
+    try {
+      await api(`/api/accounts/${encodeURIComponent(state.id)}/sales`, { method: "POST", body });
+      state.salesDirty = false;
+      load({ quiet: true });
+    } catch (err) { $("#saleErr").innerHTML = `<div class="err">${esc(err.message)}</div>`; }
+    finally { if (btn) btn.disabled = false; }
+  };
+  document.querySelectorAll("[data-del-sale]").forEach((b) => (b.onclick = async () => {
+    if (!confirm(L("تحذف هالإدخال؟", "Delete this entry?"))) return;
+    try { await api(`/api/sales/${b.dataset.delSale}`, { method: "DELETE" }); load({ quiet: true }); } catch (err) { alert(err.message); }
+  }));
+}
+
+function render() {
+  const r = state.report, k = r.kpis, pk = r.prev_kpis, a = r.account, st = r.stories;
+  state.charts.forEach((c) => c.destroy()); state.charts = [];
+  const lastSync = a.last_sync ? new Date(a.last_sync * 1000).toLocaleString(LOC, { dateStyle: "medium", timeStyle: "short" }) : L("ما تمت", "Never");
+  const acc = state.accounts.find((x) => x.id === a.id);
+  const sync = acc?.sync;
+  const tokenDays = acc?.token_expires ? Math.floor((acc.token_expires * 1000 - Date.now()) / 864e5) : null;
+  const verdicts = Object.fromEntries((r.advice?.post_insights || []).map((x) => [x.post_id, x]));
+  const maxReach = Math.max(1, ...r.by_type.map((t) => t.avg_reach || 0));
+
+  $("#app").innerHTML = `
+  <div class="meta">
+    <span class="who"><span class="avatar">${a.picture ? `<img src="${esc(a.picture)}" alt="" referrerpolicy="no-referrer">` : esc((a.username || "?")[0])}</span>@${esc(a.username)}</span>
+    <span class="pill">${L(`${num(a.followers)} متابع`, `${num(a.followers)} ${plural(a.followers, "follower", "followers")}`)}</span>
+    <span>${L(`${r.period.from} ← ${r.period.to} · مقارنة بـ ${r.period.prev_from} ← ${r.period.prev_to}`, `${r.period.from} → ${r.period.to} · vs. ${r.period.prev_from} → ${r.period.prev_to}`)}</span>
+    <span>${L("آخر تحديث", "Last updated")}: ${sync?.running ? `<span class="pill" id="syncStep">${esc(tr(sync.step))}…</span>` : lastSync}${a.is_demo ? "" : L(" · يتحدث تلقائياً كل دقيقتين", " · Auto-refreshes every 2 minutes")}</span>
+    ${sync?.error ? `<span class="pill warn">${L("خطأ بالمزامنة", "Sync error")}: ${esc(sync.error)}</span>` : ""}
+    ${a.is_demo || !r.backup ? "" : r.backup.error ? `<span class="pill warn" title="${esc(r.backup.error)}">${L("النسخة الاحتياطية فشلت", "Backup failed")}</span>`
+      : r.backup.last ? `<span title="${esc(r.backup.dir)} · ${L(`${num(r.backup.count)} نسخة`, `${num(r.backup.count)} ${plural(r.backup.count, "backup", "backups")}`)}">${L("نسخة احتياطية", "Backup")}: ${new Date(r.backup.last).toLocaleString(LOC, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })} ✓</span>` : ""}
+    ${tokenDays != null && tokenDays < 7 ? `<span class="pill warn">${L(`التوكن ينتهي خلال ${tokenDays} يوم`, `Token expires in ${tokenDays} ${plural(tokenDays, "day", "days")}`)}</span>` : ""}
+  </div>
+
+  <div class="grid kpis">
+    ${kpiCard("عدد البوستات", k.posts, pk.posts, num)}
+    ${kpiCard("إجمالي الوصول", k.reach, pk.reach, num, "مجموع الحسابات اللي وصلها كل بوست نُشر في الفترة")}
+    ${kpiCard("متوسط الوصول للبوست", k.avg_reach, pk.avg_reach, num)}
+    ${kpiCard("نسبة التفاعل", k.avg_er, pk.avg_er, pct, "(إعجاب + تعليق + حفظ + مشاركة) ÷ الوصول — متوسط البوستات", { asPoints: true })}
+    ${kpiCard("مؤشر الاهتمام", k.avg_intent, pk.avg_intent, pct, "يركز على الإشارات القريبة من الشراء: الحفظ، المشاركة، زيارة البروفايل، المتابعة — مقسومة على الوصول", { asPoints: true })}
+    ${kpiCard("نمو المتابعين", k.follower_growth, pk.follower_growth, (x) => (x == null ? "—" : (x > 0 ? "+" : "") + num(x)))}
+    ${kpiCard("زيارات البروفايل", k.profile_visits, pk.profile_visits, num)}
+    ${kpiCard("نقرات الرابط", k.link_taps, pk.link_taps, num, "نقرات على الرابط في البايو — أقرب مؤشر للبيع")}
+    ${kpiCard("الحفظ", k.saved, pk.saved, num)}
+    ${kpiCard("المشاركات", k.shares, pk.shares, num)}
+  </div>
+
+  ${r.alerts.length ? `<h2>آخر التنبيهات <small>توصلك كإشعار على الماك أول ما تصير</small></h2>
+  <div class="card alerts">${r.alerts.map((x) => `<div class="alert-row">
+    <div><b>${esc(x.title)}</b><div class="sub" style="white-space:pre-line">${esc(x.body)}</div></div>
+    <div class="sub" style="white-space:nowrap">${new Date(x.created_at * 1000).toLocaleString(LOC, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}${x.link || x.permalink ? ` · <a href="${esc(x.link || x.permalink)}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">${x.link ? L("افتح التقرير ↗", "Open report ↗") : L("فتح ↗", "Open ↗")}</a>` : ""}</div>
+  </div>`).join("")}</div>` : ""}
+
+  <h2>أهداف الشهر <small>${L(`${esc(r.goals.month_name)} — باقي ${num(r.goals.days_left)} ${r.goals.days_left >= 3 && r.goals.days_left <= 10 ? "أيام" : "يوم"}`, `${esc(tr(r.goals.month_name))} — ${num(r.goals.days_left)} ${plural(r.goals.days_left, "day", "days")} left`)}</small></h2>
+  <div class="card" id="goals"></div>
+
+  <h2>التجارب <small>غيّر شي واحد لفترة، والأداة تقول لك نفع أو لا</small></h2>
+  <div class="card" id="experiments"></div>
+
+  <h2>التحليل والنصائح <small>مبنية على أرقامك وتتحدث مع الفترة</small></h2>
+  <div class="card advice" id="advice"></div>
+
+  <h2>خطة النشر <small>للأيام السبعة الجاية — من أفضل أيامك وأوقاتك وأنواعك</small></h2>
+  <div id="plan"></div>
+  <h2>النشر المجدول <small>ريل أو صورة أو كاروسيل ينزل لحاله في الوقت اللي تختاره</small></h2>
+  <div class="card" id="sched"></div>
+
+  <h2>بنك الأفكار <small>اكتب أي فكرة تجيك، أو أرسلها لبوت التنبيهات في تيليجرام من أي مكان</small></h2>
+  <div class="card" id="ideas"></div>
+
+  <h2>أفكار من أرشيفك <small>بوستات عمرها ٣ شهور أو أكثر كانت ضعف عادتك وقتها — أغلب متابعينك الحين ما شافوها</small></h2>
+  <div id="recycle"></div>
+
+  <h2>عملاء محتملين من التعليقات <small>تعليقات تسأل عن السعر أو التسجيل أو فيها سؤال</small></h2>
+  <div class="card" id="leads"></div>
+
+  <h2>التسجيلات والمبيعات <small>تدخلها بنفسك، والأداة تربطها بالبوستات اللي نزلت قبلها</small></h2>
+  <div id="sales"></div>
+
+  <h2>المتابعين والوصول</h2>
+  <div class="grid two">
+    <div class="card"><h3>عدد المتابعين</h3><p class="sub">لقطة يومية — تتراكم مع كل تحديث</p><div class="chart-box"><canvas id="cFollowers"></canvas></div></div>
+    <div class="card"><h3>الوصول اليومي للحساب</h3><p class="sub">كل الحسابات اللي شافت محتواك في اليوم</p><div class="chart-box"><canvas id="cReach"></canvas></div></div>
+  </div>
+  <div class="grid two" style="margin-top:16px">
+    <div class="card"><h3>${L("تابعوك وألغوا متابعتك", "Follows and unfollows")}</h3><p class="sub">${flowLine(k, pk)}</p><div class="chart-box"><canvas id="cFlow"></canvas></div></div>
+    <div class="card"><h3>${L("حطوك بوسم", "Tagged you")}</h3><p class="sub">${L("بوستات ناس ثانيين فيها وسم لحسابك. شاركها في الستوري أو اشكرهم بتعليق.", "Other people's posts that tag your account. Share them to your story or thank them in a comment.")}</p>${taggedList(r.tagged)}</div>
+  </div>
+
+  <h2>مين جمهورك <small>من انستجرام: متابعينك كلهم، واللي تفاعلوا معك هالشهر</small></h2>
+  <div id="audience"></div>
+
+  <h2>${L("المنافسين", "Competitors")} <small>${L("أرقامهم العامة، تتحدث مرة باليوم", "Their public numbers, updated once a day")}</small></h2>
+  <div id="competitors"></div>
+
+  <h2>أي نوع محتوى يشتغل؟</h2>
+  <div class="card scroll">
+    ${r.by_type.length ? `<table>
+      <thead><tr><th>النوع</th><th>العدد</th><th>متوسط الوصول</th><th>نسبة التفاعل</th><th title="(الحفظ + ١٫٥×المشاركة) ÷ الوصول. نفس المقياس لكل الأنواع">الحفظ والمشاركة</th><th>متوسط الحفظ</th><th>متوسط المشاركة</th></tr></thead>
+      <tbody>${r.by_type.map((t) => `<tr>
+        <td><span class="badge">${esc(t.name)}</span></td><td>${num(t.count)}</td>
+        <td><div class="barcell"><i style="width:${(t.avg_reach / maxReach) * 100}px"></i>${num(t.avg_reach)}</div></td>
+        <td>${pct(t.avg_er)}</td><td><b>${pct(t.avg_fair)}</b></td><td>${num(t.avg_saved, 1)}</td><td>${num(t.avg_shares, 1)}</td>
+      </tr>`).join("")}</tbody></table>` : `<p class="sub">ما فيه بوستات في هالفترة.</p>`}
+  </div>
+
+  <h2>المواضيع <small>أي موضوع يجيب وصول، وأيه يجيب عملاء — من بوستاتك آخر سنة</small></h2>
+  <div id="topics"></div>
+  <h2>مدة المشاهدة في الريلز <small>كم يكملون من الريل، ووش يخليهم يكملون — آخر سنة</small></h2>
+  <div id="watch"></div>
+  <h2>الهاشتاقات <small>من بوستاتك آخر سنة — كل بوست مقارن بعادتك وقتها</small></h2>
+  <div id="tags"></div>
+
+  <h2>أفضل وقت للنشر</h2>
+  <div class="grid two">
+    <div class="card"><h3>متوسط التفاعل حسب وقت النشر</h3><p class="sub">${L(`بتوقيت ${esc(r.period.timezone)} — الرقم داخل الخانة = عدد البوستات`, `${esc(r.period.timezone)} time — the number in each cell = posts`)}</p><div id="heat"></div></div>
+    <div class="card"><h3>متى متابعينك أونلاين؟</h3><p class="sub">متوسط عدد المتابعين المتواجدين في كل ساعة (آخر ٣٠ يوم)</p><div class="chart-box"><canvas id="cOnline"></canvas></div></div>
+  </div>
+
+  <h2>الستوري <small>تنحفظ كل دقيقتين قبل ما تمسحها Meta بعد ٢٤ ساعة</small></h2>
+  ${st.kpis.count ? `
+  <div class="grid kpis">
+    ${kpiCard("عدد الستوري", st.kpis.count, st.prev_kpis.count, num)}
+    ${kpiCard("متوسط الوصول", st.kpis.avg_reach, st.prev_kpis.avg_reach, num)}
+    ${kpiCard("نسبة الإجراء", st.kpis.avg_action_rate, st.prev_kpis.avg_action_rate, pct, "(رد + زيارة بروفايل + متابعة + مشاركة) ÷ الوصول — متوسط الستوري", { asPoints: true })}
+    ${kpiCard("نسبة الخروج", st.kpis.avg_exit_rate, st.prev_kpis.avg_exit_rate, pct, "كم واحد سكّر الستوري من اللي شافوها — كل ما قل أحسن", { asPoints: true, lowerIsBetter: true })}
+    ${kpiCard("زيارات البروفايل", st.kpis.profile_visits, st.prev_kpis.profile_visits, num, "زيارات لبروفايلك من الستوري")}
+    ${kpiCard("الردود", st.kpis.replies, st.prev_kpis.replies, num, "ردود على الستوري توصلك في الخاص")}
+  </div>
+  <div class="grid two" style="margin-top:14px">
+    <div class="card"><h3>كم يبقى معك في سلسلة اليوم؟</h3><p class="sub">وصول كل ستوري مقارنة بأول ستوري في نفس اليوم</p><div class="chart-box"><canvas id="cRetention"></canvas></div></div>
+    <div class="card"><h3>${L("الستوري الشغالة الحين", "Live stories")}</h3><p class="sub">${L("اللي ما مر عليها ٢٤ ساعة، وأرقامها تتحدث كل دقيقتين. لما تنتهي تنتقل للسابقة", "Under 24 hours old, numbers update every 2 minutes. Once they expire they move to past stories")}</p>
+      ${st.list.some((x) => x.live) ? `<div class="grid posts stories">${st.list.filter((x) => x.live).map(storyCard).join("")}</div>` : `<p class="sub" style="margin:0">${L("ما فيه ستوري شغالة الحين.", "No live stories right now.")}</p>`}
+      ${st.list.some((x) => !x.live) ? `<details style="margin-top:12px"><summary class="sub" style="cursor:pointer">${L("الستوري السابقة (الأحدث أول)", "Past stories (newest first)")}</summary>
+        <div class="grid posts stories" style="margin-top:10px">${st.list.filter((x) => !x.live).slice(0, 6).map(storyCard).join("")}</div></details>` : ""}</div>
+  </div>` : `<div class="card"><p class="sub" style="margin:0">${a.is_demo ? "ما فيه ستوري في هالفترة." : "ما انحفظت أي ستوري في هالفترة. Meta ما تعطي الستوري القديمة، فالأداة تبدأ تحفظ من الحين: نزّل ستوري وبتطلع هنا خلال دقيقتين، وخلي الأداة شغالة عشان تلحق أرقامها قبل ما تنتهي."}</p></div>`}
+
+  <h2>أفضل البوستات <small>حسب مؤشر الاهتمام</small></h2>
+  <div class="grid posts">${r.top.map((p) => postCard(p, verdicts)).join("") || `<p class="sub">ما فيه بيانات.</p>`}</div>
+
+  ${r.bottom.length ? `<h2>أضعف البوستات</h2><div class="grid posts">${r.bottom.map((p) => postCard(p, verdicts)).join("")}</div>` : ""}
+
+  ${r.trials?.length ? `<h2>ريلز تجريبية <small>${L("Trial: تطلع لغير المتابعين بس، فما تنحسب في الأرقام والنصائح لين تنقلها للعامة", "Trial: shown to non-followers only, so they're left out of stats and advice until you share them publicly")}</small></h2>
+  <div class="card scroll"><table>
+    <thead><tr><th>${L("الريل", "Reel")}</th><th>${L("نزل", "Posted")}</th><th>${L("المشاهدات", "Views")}</th><th>${L("الوصول", "Reach")}</th><th>${L("متوسط مدة المشاهدة", "Avg. watch time")}</th><th>${L("المشاركات", "Shares")}</th><th>${L("الحفظ", "Saves")}</th></tr></thead>
+    <tbody>${r.trials.map((p) => `<tr>
+      <td style="max-width:320px" data-notr><a href="${esc(p.permalink)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${esc(p.caption.split("\n")[0].slice(0, 70)) || "—"}</a></td>
+      <td style="white-space:nowrap">${new Date(p.timestamp).toLocaleDateString(LOC, { day: "numeric", month: "short" })}</td>
+      <td><b>${num(p.views)}</b></td><td>${num(p.reach)}</td><td>${p.avg_watch_time != null ? num(p.avg_watch_time, 1) + L(" ث", " s") : "—"}</td>
+      <td>${num(p.shares)}</td><td>${num(p.saved)}</td></tr>`).join("")}</tbody>
+  </table></div>` : ""}
+
+  ${r.reels.length ? `<h2>أداء الريلز <small>${L(`${num(r.reels.length)} ريل`, `${num(r.reels.length)} ${plural(r.reels.length, "reel", "reels")}`)}</small></h2>
+  <div class="card scroll"><table>
+    <thead><tr><th>الريل</th><th>المشاهدات</th><th>الوصول</th><th>متوسط مدة المشاهدة</th><th>المشاركات</th><th>الحفظ</th><th>التفاعل</th></tr></thead>
+    <tbody>${r.reels.map((p) => `<tr>
+      <td style="max-width:320px" data-notr><a href="${esc(p.permalink)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${esc(p.caption.split("\n")[0].slice(0, 70)) || "—"}</a></td>
+      <td><b>${num(p.views)}</b></td><td>${num(p.reach)}</td><td>${p.avg_watch_time != null ? num(p.avg_watch_time, 1) + L(" ث", " s") : "—"}</td>
+      <td>${num(p.shares)}</td><td>${num(p.saved)}</td><td>${pct(p.er)}</td></tr>`).join("")}</tbody>
+  </table></div>` : ""}
+  `;
+
+  renderAdvice(r.advice);
+  renderLeads(r.comments, a);
+  renderAudience(r.audience);
+  renderCompetitors(r.competitors, a);
+  renderSales(r.sales);
+  renderPlan(r.plan);
+  renderSched(r.scheduled || [], a);
+  renderGoals(r.goals);
+  renderExperiments(r.experiments);
+  renderRecycle(r.recycle);
+  renderIdeas(r.ideas);
+  renderTopics(r.topics);
+  renderWatch(r.watch);
+  renderTags(r.hashtags);
+  renderHeat(r.heatmap);
+  drawCharts(r);
+  buildNav();
+  if (sync?.running) pollSync();
+}
+
+// الجوال: شريط الأقسام فوق يوديك لأي قسم بضغطة، ويعلّم القسم اللي أنت فيه
+const NAV_NAMES = [
+  ["آخر التنبيهات", "التنبيهات", "Alerts"], ["أهداف الشهر", "الأهداف", "Goals"], ["التجارب", "التجارب", "Experiments"],
+  ["التحليل والنصائح", "النصائح", "Advice"], ["خطة النشر", "الخطة", "Plan"], ["بنك الأفكار", "الأفكار", "Ideas"],
+  ["أفكار من أرشيفك", "الأرشيف", "Archive"], ["عملاء محتملين من التعليقات", "العملاء", "Leads"], ["التسجيلات والمبيعات", "المبيعات", "Sales"],
+  ["المتابعين والوصول", "المتابعين", "Followers"], ["أي نوع محتوى يشتغل؟", "الأنواع", "Formats"], ["المواضيع", "المواضيع", "Topics"],
+  ["مدة المشاهدة في الريلز", "المشاهدة", "Watch time"], ["الهاشتاقات", "الهاشتاقات", "Hashtags"], ["أفضل وقت للنشر", "الأوقات", "Timing"],
+  ["الستوري", "الستوري", "Stories"], ["أفضل البوستات", "الأفضل", "Top posts"], ["أضعف البوستات", "الأضعف", "Weakest"], ["أداء الريلز", "الريلز", "Reels"], ["ريلز تجريبية", "التجريبية", "Trials"],
+];
+function buildNav() {
+  const nav = $("#secnav"), heads = [...document.querySelectorAll("#app h2")];
+  nav.innerHTML = heads.map((h, i) => {
+    h.id = `sec-${i}`;
+    const title = (h.firstChild?.textContent || h.textContent).trim();
+    const name = NAV_NAMES.find((x) => x[0] === title || tr(x[0]) === title);
+    return `<a href="#sec-${i}" data-notr>${esc(name ? L(name[1], name[2]) : title)}</a>`;
+  }).join("");
+  spy();
+}
+function spy() {
+  const nav = $("#secnav");
+  if (!nav.offsetParent) return;
+  let cur = null;
+  const line = nav.getBoundingClientRect().bottom + 40;
+  for (const h of document.querySelectorAll("#app h2")) if (h.getBoundingClientRect().top < line) cur = h.id;
+  nav.querySelectorAll("a").forEach((a) => {
+    const on = a.getAttribute("href") === `#${cur}`;
+    if (on && !a.classList.contains("on")) nav.scrollTo({ left: a.offsetLeft - nav.clientWidth / 2 + a.offsetWidth / 2, behavior: "smooth" });
+    a.classList.toggle("on", on);
+  });
+}
+addEventListener("scroll", () => requestAnimationFrame(spy), { passive: true });
+$("#secnav").addEventListener("click", (e) => {
+  const a = e.target.closest("a");
+  if (!a) return;
+  e.preventDefault();
+  document.querySelector(a.getAttribute("href"))?.scrollIntoView({ behavior: "smooth" });
+});
+
+// قائمة الأدوات ☰ على الجوال
+$("#menuBtn").onclick = () => {
+  const open = document.querySelector("header").classList.toggle("open");
+  $("#menuBtn").setAttribute("aria-expanded", open);
+  $("#menuBtn").textContent = open ? "✕" : "☰";
+};
+$("#tools").addEventListener("click", (e) => {
+  if (!e.target.closest("button") || e.target.closest("[data-theme-toggle]")) return;
+  document.querySelector("header").classList.remove("open");
+  $("#menuBtn").textContent = "☰";
+  $("#menuBtn").setAttribute("aria-expanded", false);
+});
+
+// اسحب لتحت للتحديث: لما تفتح اللوحة من أيقونة الشاشة الرئيسية (ما فيها شريط سفاري)
+if (navigator.standalone || matchMedia("(display-mode: standalone)").matches) {
+  const ptr = $("#ptr");
+  let y0 = null, dy = 0;
+  addEventListener("touchstart", (e) => { y0 = scrollY <= 0 && !document.querySelector("dialog[open]") ? e.touches[0].clientY : null; dy = 0; }, { passive: true });
+  addEventListener("touchmove", (e) => {
+    if (y0 == null) return;
+    dy = Math.max(0, e.touches[0].clientY - y0);
+    ptr.style.translate = `-50% ${Math.min(dy, 120) * 0.6 - 60}px`;
+    ptr.classList.toggle("ready", dy > 90);
+  }, { passive: true });
+  addEventListener("touchend", () => {
+    if (y0 == null) return;
+    y0 = null;
+    if (dy > 90) { ptr.classList.add("go"); ptr.textContent = "↻"; location.reload(); }
+    else { ptr.style.translate = ""; ptr.classList.remove("ready"); }
+  });
+}
+
+function renderHeat(h) {
+  const vals = h.flat().filter(Boolean).map((c) => c.er);
+  const max = Math.max(...vals, 0.0001), min = Math.min(...vals, 0);
+  let html = `<div class="heat"><div></div>${SLOTS.map((s) => `<div>${tr(s)}</div>`).join("")}`;
+  h.forEach((row, d) => {
+    html += `<div style="text-align:start">${tr(DAYS[d])}</div>`;
+    row.forEach((c, s) => {
+      if (!c) return (html += `<div class="cell empty" title="ما فيه بوستات">·</div>`);
+      const step = Math.min(5, Math.floor(((c.er - min) / (max - min || 1)) * 5.99));
+      html += `<div class="cell ${step >= 3 ? "dark" : ""}" style="background:var(--seq-${step})" title="${L(`${DAYS[d]} ${SLOTS[s]}: تفاعل ${pct(c.er)} من ${c.n} بوست`, `${tr(DAYS[d])} ${tr(SLOTS[s])}: ${pct(c.er)} engagement from ${c.n} ${plural(c.n, "post", "posts")}`)}">${c.n}</div>`;
+    });
+  });
+  html += `</div><div class="legend-seq">${L("تفاعل أقل", "Lower engagement")} ${[0, 1, 2, 3, 4, 5].map((i) => `<span style="background:var(--seq-${i})"></span>`).join("")} ${L("تفاعل أعلى", "Higher engagement")}</div>`;
+  $("#heat").innerHTML = html;
+}
+
+// تغيير الثيم يعيد رسم الرسوم البيانية بألوانه (بدون ما يمسح شي كتبته)
+addEventListener("themechange", () => {
+  if (!state.report) return;
+  state.charts.forEach((c) => c.destroy()); state.charts = [];
+  drawCharts(state.report);
+});
+
+// ثيم مودرن 3D: الأعمدة مجسّمة (وجه جانبي ووجه علوي)، والخط يتوهج وتحته تدرّج، وخط عمودي يتبع الماوس
+const is3d = () => document.documentElement.dataset.look === "3d";
+const shade = (hex, k) => {
+  const m = /^#?([\da-f]{6})$/i.exec(hex || "");
+  if (!m) return hex;
+  const n = parseInt(m[1], 16), f = (c) => Math.round(k < 0 ? c * (1 + k) : c + (255 - c) * k);
+  return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`;
+};
+const bar3d = {
+  id: "bar3d",
+  beforeDatasetsDraw(chart) {
+    const { ctx } = chart;
+    chart.data.datasets.forEach((ds, i) => {
+      const meta = chart.getDatasetMeta(i);
+      if (meta.type !== "bar" || meta.hidden) return;
+      meta.data.forEach((b, j) => {
+        const { x, y, base, width } = b.getProps(["x", "y", "base", "width"], false);
+        if (!width || y === base) return;
+        const c = Array.isArray(ds._c3d) ? ds._c3d[j] : ds._c3d;
+        const d = Math.min(9, width * 0.38), l = x - width / 2, rt = x + width / 2, top = Math.min(y, base), bot = Math.max(y, base);
+        ctx.save();
+        ctx.fillStyle = shade(c, -0.5); // الوجه الجانبي
+        ctx.beginPath(); ctx.moveTo(rt, top); ctx.lineTo(rt + d, top - d); ctx.lineTo(rt + d, bot - d); ctx.lineTo(rt, bot); ctx.fill();
+        if (y < base) { // الوجه العلوي (للأعمدة اللي فوق الصفر)
+          ctx.fillStyle = shade(c, 0.3);
+          ctx.beginPath(); ctx.moveTo(l, top); ctx.lineTo(l + d, top - d); ctx.lineTo(rt + d, top - d); ctx.lineTo(rt, top); ctx.fill();
+        }
+        ctx.restore();
+      });
+    });
+  },
+  beforeDatasetDraw(chart, { meta }) {
+    if (meta.type !== "line") return;
+    chart.ctx.save();
+    chart.ctx.shadowColor = "rgba(143,124,255,.85)"; chart.ctx.shadowBlur = 16;
+  },
+  afterDatasetDraw(chart, { meta }) { if (meta.type === "line") chart.ctx.restore(); },
+  afterDraw(chart) {
+    const a = chart.tooltip?.getActiveElements?.()[0];
+    if (!a) return;
+    const { ctx, chartArea: ca } = chart;
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,255,255,.28)"; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(a.element.x, ca.top); ctx.lineTo(a.element.x, ca.bottom); ctx.stroke();
+    ctx.restore();
+  },
+};
+function mkChart(el, cfg) {
+  if (!is3d()) return new Chart(el, cfg);
+  const vgrad = (c, k1, k2) => (ctx) => {
+    const a = ctx.chart.chartArea;
+    if (!a) return c;
+    const g = ctx.chart.ctx.createLinearGradient(0, a.bottom, 0, a.top);
+    g.addColorStop(0, shade(c, k1)); g.addColorStop(1, shade(c, k2));
+    return g;
+  };
+  for (const ds of cfg.data.datasets) {
+    if (cfg.type === "bar") {
+      const c = ds.backgroundColor;
+      ds._c3d = c;
+      const at = (ctx) => (Array.isArray(c) ? c[ctx.dataIndex] : c);
+      ds.backgroundColor = (ctx) => vgrad(at(ctx), -0.35, 0.12)(ctx);
+      ds.hoverBackgroundColor = (ctx) => vgrad(at(ctx), -0.1, 0.4)(ctx);
+      ds.borderRadius = 0; ds.borderSkipped = false;
+    } else if (cfg.type === "line") {
+      const c = ds.borderColor;
+      ds.borderColor = (ctx) => {
+        const a = ctx.chart.chartArea;
+        if (!a) return c;
+        const g = ctx.chart.ctx.createLinearGradient(a.left, 0, a.right, 0);
+        g.addColorStop(0, "#22d3ee"); g.addColorStop(0.5, c); g.addColorStop(1, "#f472b6");
+        return g;
+      };
+      ds.backgroundColor = (ctx) => {
+        const a = ctx.chart.chartArea;
+        if (!a) return "transparent";
+        const g = ctx.chart.ctx.createLinearGradient(0, a.top, 0, a.bottom);
+        g.addColorStop(0, "rgba(143,124,255,.38)"); g.addColorStop(1, "rgba(143,124,255,0)");
+        return g;
+      };
+      Object.assign(ds, { fill: "start", borderWidth: 3, pointHoverRadius: 7, pointHoverBorderWidth: 3, pointHoverBackgroundColor: "#fff", pointHoverBorderColor: c });
+    }
+  }
+  // نسخة من الإعدادات، لأن بعض الرسوم تتشارك نفس الكائن
+  const o = { ...cfg.options };
+  o.plugins = { ...o.plugins, tooltip: { ...o.plugins?.tooltip, backgroundColor: "rgba(16,14,38,.94)", titleColor: "#fff", bodyColor: "#cfcaff", borderColor: "rgba(255,255,255,.16)", borderWidth: 1, cornerRadius: 12, padding: 12, caretSize: 7 } };
+  o.animation = { duration: 900, easing: "easeOutQuart", delay: (c) => (c.type === "data" && c.mode === "default" ? c.dataIndex * 22 : 0) };
+  o.layout = { padding: { top: 10, left: 10, right: 12 } }; // مكان للوجه الجانبي وآخر تاريخ
+  return new Chart(el, { ...cfg, options: o, plugins: [...(cfg.plugins || []), bar3d] });
+}
+
+function drawCharts(r) {
+  Chart.defaults.font.family = '"IBM Plex Sans Arabic", system-ui, sans-serif';
+  Chart.defaults.color = css("--text-2");
+  const grid = { color: css("--grid") };
+  const accent = css("--accent");
+  const base = {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: "index", intersect: false },
+    plugins: { legend: { display: false }, tooltip: { rtl: LANG !== "en", textDirection: LANG === "en" ? "ltr" : "rtl", backgroundColor: css("--text"), titleColor: css("--surface"), bodyColor: css("--surface"), padding: 10 } },
+    scales: { x: { grid: { display: false }, reverse: LANG !== "en", ticks: { maxTicksLimit: 7 } }, y: { grid, border: { display: false }, ticks: { callback: (v) => nf.format(v) } } },
+  };
+  const day = (d) => new Date(d).toLocaleDateString(LOC, { day: "numeric", month: "short" });
+
+  const fs = r.followers_series.filter((d) => d.followers != null);
+  if (fs.length > 1) {
+    state.charts.push(mkChart($("#cFollowers"), {
+      type: "line",
+      data: { labels: fs.map((d) => day(d.date)), datasets: [{ label: L("المتابعين", "Followers"), data: fs.map((d) => d.followers), borderColor: accent, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: 0.3 }] },
+      options: { ...base, scales: { ...base.scales, y: { ...base.scales.y, beginAtZero: false } } },
+    }));
+  } else if ($("#cFollowers")) $("#cFollowers").parentElement.innerHTML = `<p class="sub">يحتاج أكثر من يوم من التحديثات. الأداة تحفظ عدد المتابعين كل يوم تتحدث فيه.</p>`;
+
+  // تابعوك فوق الصفر وألغوا تحته، بدون آخر يومين (Meta تكمّلهم متأخر)
+  const lagDay = isoDate(new Date(Date.now() - 2 * 864e5));
+  const fl = r.followers_series.filter((d) => d.unfollows != null && d.date < lagDay);
+  if (fl.length > 1) {
+    state.charts.push(mkChart($("#cFlow"), {
+      type: "bar",
+      data: { labels: fl.map((d) => day(d.date)), datasets: [
+        { label: L("تابعوك", "Followed"), data: fl.map((d) => d.follows), backgroundColor: accent, borderRadius: { topLeft: 4, topRight: 4 }, maxBarThickness: 18 },
+        { label: L("ألغوا", "Unfollowed"), data: fl.map((d) => -d.unfollows), backgroundColor: css("--muted"), borderRadius: { bottomLeft: 4, bottomRight: 4 }, maxBarThickness: 18 },
+      ] },
+      options: { ...base, plugins: { ...base.plugins, legend: { display: true, labels: { boxWidth: 10, boxHeight: 10, color: css("--text-2") } },
+        tooltip: { ...base.plugins.tooltip, callbacks: { label: (c) => `${c.dataset.label}: ${num(Math.abs(c.raw))}` } } },
+        scales: { ...base.scales, x: { ...base.scales.x, stacked: true }, y: { ...base.scales.y, stacked: true, ticks: { ...base.scales.y?.ticks, callback: (v) => num(Math.abs(v)) } } } },
+    }));
+  } else if ($("#cFlow")) $("#cFlow").parentElement.innerHTML = "";
+
+  const rs = r.followers_series.filter((d) => d.reach != null);
+  if (rs.length) {
+    state.charts.push(mkChart($("#cReach"), {
+      type: "bar",
+      data: { labels: rs.map((d) => day(d.date)), datasets: [{ label: L("الوصول", "Reach"), data: rs.map((d) => d.reach), backgroundColor: accent, borderRadius: { topLeft: 4, topRight: 4 }, maxBarThickness: 18 }] },
+      options: base,
+    }));
+  } else if ($("#cReach")) $("#cReach").parentElement.innerHTML = `<p class="sub">ما فيه بيانات وصول يومية لهالفترة (Meta توفر آخر ٣٠ يوم فقط).</p>`;
+
+  const ret = r.stories.retention;
+  if ($("#cRetention")) {
+    if (ret.length > 1) {
+      state.charts.push(mkChart($("#cRetention"), {
+        type: "bar",
+        data: { labels: ret.map((p) => L(`ستوري ${p.position}`, `Story ${p.position}`)), datasets: [{ label: L("يبقى معك", "Retained"), data: ret.map((p) => Math.round(p.kept * 100)), backgroundColor: ret.map((p) => (p.kept >= 0.6 ? accent : css("--seq-1"))), borderRadius: { topLeft: 4, topRight: 4 }, maxBarThickness: 36 }] },
+        options: { ...base, plugins: { ...base.plugins, tooltip: { ...base.plugins.tooltip, callbacks: { label: (c) => L(`يبقى ${c.raw}٪ (من ${ret[c.dataIndex].days} يوم)`, `${c.raw}% stay (over ${ret[c.dataIndex].days} ${plural(ret[c.dataIndex].days, "day", "days")})`) } } }, scales: { ...base.scales, y: { ...base.scales.y, max: 100, ticks: { callback: (v) => v + PCT } } } },
+      }));
+    } else if ($("#cRetention")) $("#cRetention").parentElement.innerHTML = `<p class="sub">يحتاج يومين على الأقل فيهم أكثر من ستوري.</p>`;
+  }
+
+  const on = r.account.online_followers;
+  if (on) {
+    const hrs = on.map((_, h) => (LANG === "en" ? `${h % 12 || 12}${h < 12 ? "am" : "pm"}` : h === 0 ? "١٢ص" : h < 12 ? `${h}ص` : h === 12 ? "١٢م" : `${h - 12}م`));
+    const peak = Math.max(...on);
+    state.charts.push(mkChart($("#cOnline"), {
+      type: "bar",
+      data: { labels: hrs, datasets: [{ label: L("متابعين أونلاين", "Followers online"), data: on, backgroundColor: on.map((v) => (v >= peak * 0.85 ? accent : css("--seq-1"))), borderRadius: { topLeft: 4, topRight: 4 } }] },
+      options: { ...base, scales: { ...base.scales, x: { ...base.scales.x, ticks: { maxTicksLimit: 12 } } } },
+    }));
+  } else if ($("#cOnline")) $("#cOnline").parentElement.innerHTML = `<p class="sub">ما توفرت البيانات (Meta تعطيها للحسابات اللي فوق ١٠٠ متابع).</p>`;
+}
+
+function renderAdvice(adv) {
+  const pr = { "عالية": "h", "متوسطة": "m", "منخفضة": "l" };
+  const list = (items, empty) => (items.length ? `<ul>${items.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : `<p class="sub">${empty}</p>`);
+  $("#advice").innerHTML = `
+    <h3>الملخص</h3><p style="margin-top:0">${esc(adv.summary)}</p>
+    <div class="grid two">
+      <div><h4 style="color:var(--good)">✓ وش ماشي صح</h4>${list(adv.wins, "ما فيه شي بارز في هالفترة.")}</div>
+      <div><h4 style="color:var(--bad)">! وش يحتاج تحسين</h4>${list(adv.problems, "ما فيه مشاكل واضحة. كمّل على نفس الخط.")}</div>
+    </div>
+    ${adv.recommendations.length ? `<h4>التوصيات</h4>
+    <div class="recs">${adv.recommendations.map((x) => `<div class="rec"><b>${esc(x.title)}</b><span class="p ${pr[x.priority] || "l"}">${L(`أولوية ${esc(x.priority)}`, `${esc(tr(x.priority))} priority`)}</span><p style="margin:6px 0 0">${esc(x.detail)}</p></div>`).join("")}</div>` : ""}
+    ${adv.content_ideas.length ? `<h4>أفكار محتوى من أنجح بوستاتك</h4>
+    <div class="ideas">${adv.content_ideas.map((x) => `<div class="rec idea"><span class="badge">${esc(x.format)}</span> <b>${esc(x.title)}</b><div class="hook" data-notr>${L("«", "“")}${esc(x.hook)}${L("»", "”")}</div><span style="color:var(--text-2);font-size:13.5px">${esc(x.why)}</span>${x.format === "كاروسيل" ? `<div><a class="btn sm" style="text-decoration:none;margin-top:6px" target="_blank" href="${esc(carouselUrl({ hook: x.hook }))}">ابنِه في صانع الكاروسيل ↗</a></div>` : ""}</div>`).join("")}</div>` : ""}
+    <h4>خطة الفترة الجاية</h4><p>${esc(adv.next_steps)}</p>
+    <p class="sub">سبب نجاح أو ضعف كل بوست مكتوب تحت بطاقته في قسم أفضل وأضعف البوستات.</p>`;
+}
+
+// متابعة المزامنة: مؤقت واحد بس مهما انعادت الصفحة
+let syncPoll = null;
+function pollSync() { clearTimeout(syncPoll); syncPoll = setTimeout(refreshWhileSyncing, 3000); }
+async function refreshWhileSyncing() {
+  syncPoll = null;
+  try {
+    await loadAccounts();
+    const acc = state.accounts.find((a) => a.id === state.id);
+    if (acc?.sync?.running) {
+      const pill = $("#syncStep");
+      if (pill) pill.textContent = acc.sync.step + "…";
+      pollSync();
+    } else load();
+  } catch { pollSync(); }
+}
+
+// الأحداث
+document.querySelectorAll("#ranges button").forEach((b) => (b.onclick = () => {
+  setRange(b.dataset.days === "custom" ? "custom" : +b.dataset.days);
+  if (b.dataset.days !== "custom") load();
+}));
+["#from", "#to"].forEach((s) => ($(s).onchange = () => {
+  if ($("#from").value && $("#to").value && $("#from").value <= $("#to").value) { state.from = $("#from").value; state.to = $("#to").value; load(); }
+}));
+$("#account").onchange = async (e) => {
+  Object.assign(state, { id: e.target.value, reply: null, won: null, dm: null, leadFilter: null, leadType: null, recycleFilter: null, recycleMore: false, salesDirty: false });
+  if ($("#capResult")) $("#capResult").innerHTML = "";
+  await loadAccounts(); load();
+};
+$("#syncBtn").onclick = async () => { try { await api(`/api/accounts/${encodeURIComponent(state.id)}/sync`, { method: "POST" }); await loadAccounts(); load(); } catch (err) { alert(err.message); } };
+// فحص الكابشن: يتحدث لحاله وأنت تكتب
+let capTimer;
+async function runCaptionCheck() {
+  const caption = $("#capText").value;
+  $("#capCount").textContent = L(`${num(caption.length)} حرف`, `${num(caption.length)} ${plural(caption.length, "character", "characters")}`);
+  if (!caption.trim()) return ($("#capResult").innerHTML = "");
+  const r = await api(`/api/accounts/${encodeURIComponent(state.id)}/check-caption`, { method: "POST", body: { caption, kind: $("#capKind").value, goal: $("#capGoal").value } });
+  const icon = { bad: ["✕", "var(--bad)"], warn: ["!", "var(--bad)"], tip: ["💡", "var(--accent)"], ok: ["✓", "var(--good)"] };
+  const rel = (x) => (x == null ? "" : x >= 1.1 ? L(` · ${num(x, 1)}× عادتك`, ` · ${num(x, 1)}× your usual`) : x <= 0.9 ? L(` · ${num(x * 100)}٪ من عادتك`, ` · ${num(x * 100)}% of your usual`) : L(" · مثل عادتك", " · About your usual"));
+  $("#capResult").innerHTML = `
+    <h4 style="margin:16px 0 8px">${L(`النتيجة: ${num(r.passed)} من ${num(r.checks)} تمام`, `Result: ${num(r.passed)} of ${num(r.checks)} passed`)}</h4>
+    <div class="cap-items">${r.items.map((x) => `<div class="cap-item"><span style="color:${icon[x.level][1]}">${icon[x.level][0]}</span>
+      <div><b>${esc(x.title)}</b><div class="hint" style="margin:0">${esc(x.detail)}</div></div></div>`).join("")}</div>
+    ${r.similar.length ? `<h4 style="margin:16px 0 8px">بوستات سابقة بنفس الموضوع</h4>${r.similar.map((p) => `<div class="cap-item"><span>↗</span><div>
+      <a href="${esc(p.permalink)}" target="_blank" rel="noopener" style="color:inherit" data-notr>${esc(p.caption)}</a>
+      <div class="hint" style="margin:0">${L("الوصول", "Reach")} ${num(p.reach)}${rel(p.rel_reach)}</div></div></div>`).join("")}` : ""}`;
+}
+["#capText", "#capKind", "#capGoal"].forEach((s) => ($(s).oninput = () => { clearTimeout(capTimer); capTimer = setTimeout(() => runCaptionCheck().catch((e) => ($("#capResult").innerHTML = `<div class="err">${esc(e.message)}</div>`)), 500); }));
+// زر الجوال يطلع بس على الماك نفسه
+const onMac = ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
+$("#phoneBtn").style.display = onMac ? "" : "none";
+function showPhone(info) {
+  $("#phoneUrls").innerHTML = info.urls.map((u, i) => `<div style="direction:ltr;text-align:center;font-weight:600;font-size:${i ? 14 : 17}px;margin:4px 0;${i ? "color:var(--muted)" : ""}">${esc(u)}</div>`).join("") +
+    (info.urls.length > 1 ? `<p class="hint" style="text-align:center">إذا ما فتح الأول، جرّب الثاني.</p>` : "");
+  $("#phoneCode").textContent = info.code;
+  $("#phoneDevices").textContent = info.devices ? L(`${num(info.devices)} ${info.devices === 1 ? "جهاز داخل" : "أجهزة داخلة"} حالياً. «رمز جديد» يطلّعها كلها.`, `${num(info.devices)} ${plural(info.devices, "device", "devices")} signed in. “New code” signs them all out.`) : "";
+}
+$("#phoneBtn").onclick = async () => { showPhone(await api("/api/phone")); renderTelegram(await api("/api/telegram")); phoneDlg.showModal(); };
+
+// ربط بوت تيليجرام: تسويه من BotFather، تلصق التوكن هنا، وتضغط Start من جوالك
+let tgTimer;
+function renderTelegram(t) {
+  clearTimeout(tgTimer);
+  const box = $("#tgBox");
+  if (t.connected) {
+    box.innerHTML = `<p style="margin:0">${L("✅ مربوط مع", "✅ Connected to")} <b>@${esc(t.bot)}</b>${t.chat_name ? ` (<span data-notr>${esc(t.chat_name)}</span>)` : ""}${L(". كل تنبيه يوصلك على الماك يوصلك هناك بعد.", ". Every alert you get on the Mac goes there too.")}</p>
+      <div class="actions" style="justify-content:flex-start;margin-top:10px"><button class="btn" id="tgTest">أرسل تجربة</button><button class="btn" id="tgOff">فك الربط</button></div><div id="tgMsg"></div>`;
+    $("#tgTest").onclick = async () => { try { await api("/api/telegram/test", { method: "POST" }); $("#tgMsg").innerHTML = `<p class="hint">${L("انرسلت ✓ شيّك تيليجرام.", "Sent ✓ Check Telegram.")}</p>`; } catch (e) { $("#tgMsg").innerHTML = `<div class="err">${esc(e.message)}</div>`; } };
+    $("#tgOff").onclick = async () => { if (confirm(L("تفك ربط تيليجرام؟", "Disconnect Telegram?"))) renderTelegram(await api("/api/telegram", { method: "DELETE" })); };
+  } else if (t.link) {
+    box.innerHTML = `<p style="margin:0">آخر خطوة: افتح هالرابط من جوالك واضغط <b>Start</b> (أو «ابدأ»):</p>
+      <p style="direction:ltr;text-align:center;font-weight:600;margin:8px 0"><a href="${esc(t.link)}" target="_blank" rel="noopener" style="color:var(--accent)">${esc(t.link)}</a></p>
+      <p class="hint">${L(`أو افتح البوت @${esc(t.bot)} في تيليجرام واضغط Start من نفس الرابط. ننتظرك ٣٠ دقيقة.`, `Or open @${esc(t.bot)} in Telegram and tap Start from the same link. This link is valid for 30 minutes.`)}</p>`;
+    tgTimer = setTimeout(async () => phoneDlg.open && renderTelegram(await api("/api/telegram")), 3000);
+  } else {
+    box.innerHTML = `<ol class="steps" style="margin-top:0">
+        <li>في تيليجرام افتح <b>@BotFather</b> واكتب <b>/newbot</b>، واختر اسم ويوزر للبوت (لازم ينتهي بـ bot).</li>
+        <li>BotFather يعطيك توكن. انسخه والصقه هنا (يتحفظ على جهازك بس):</li>
+      </ol>
+      <input type="text" id="tgToken" dir="ltr" placeholder="123456789:AA..." autocomplete="off">
+      <div class="actions" style="justify-content:flex-start;margin-top:10px"><button class="btn primary" id="tgSave">ربط البوت</button></div>
+      <div id="tgMsg"></div>
+      <p class="hint">التنبيهات تنرسل عن طريق خوادم تيليجرام: عناوين البوستات والأرقام وعدد اللي سألوا عن السعر، بدون أسماء المعلّقين.</p>`;
+    $("#tgSave").onclick = async () => {
+      try { renderTelegram(await api("/api/telegram", { method: "POST", body: { token: $("#tgToken").value } })); }
+      catch (e) { $("#tgMsg").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+    };
+  }
+}
+$("#phoneNew").onclick = async () => { if (confirm(L("تسوي رمز جديد؟ الأجهزة اللي دخلت بتطلع.", "Create a new code? Signed-in devices will be signed out."))) showPhone(await api("/api/phone/new-code", { method: "POST" })); };
+$("#captionBtn").onclick = () => { captionDlg.showModal(); $("#capText").focus(); };
+
+$("#dmSave").onclick = async () => {
+  const info = Object.fromEntries([...$("#dmInfo").querySelectorAll("input")].map((x) => [x.name, x.value]));
+  const templates = Object.fromEntries([...$("#dmTpls").querySelectorAll("textarea")].map((x) => [x.name, x.value]));
+  try {
+    state.report.dm = await api(`/api/accounts/${encodeURIComponent(state.id)}/dm`, { method: "PUT", body: { info, templates } });
+    dmDlg.close();
+    if (state.dm) { state.dm = null; renderLeads(state.report.comments, state.report.account); }
+  } catch (err) { $("#dmErr").innerHTML = `<div class="err">${esc(err.message)}</div>`; }
+};
+$("#tplSave").onclick = async () => {
+  const body = Object.fromEntries(["سعر", "تسجيل", "سؤال"].map((k) => [k, tplDlg.querySelector(`[name="${k}"]`).value]));
+  try {
+    state.report.templates = await api(`/api/accounts/${encodeURIComponent(state.id)}/templates`, { method: "PUT", body });
+    tplDlg.close();
+  } catch (err) { $("#tplErr").innerHTML = `<div class="err">${esc(err.message)}</div>`; }
+};
+// صانع الكاروسيل (مع فكرة وهدف إذا جاي من الخطة أو الأفكار)
+const carouselUrl = (o = {}) => `/carousel.html?${new URLSearchParams({ id: state.id || "", ...Object.fromEntries(Object.entries(o).filter(([, v]) => v)) })}`;
+$("#carouselBtn").onclick = () => open(carouselUrl(), "_blank");
+// مسح الحساب: من الماك بس، وتكتب اليوزر للتأكيد
+$("#delAccBtn").onclick = () => {
+  const acc = state.accounts.find((a) => a.id === state.id);
+  if (!acc) return;
+  $("#delAccName").textContent = "@" + acc.username + (acc.is_demo ? L(" (التجريبي)", " (demo)") : "");
+  $("#delAccNote").textContent = acc.is_demo ? L("تقدر ترجّع الحساب التجريبي متى ما تبي من «تحميل التجريبي».", "You can bring the demo account back anytime with “Load demo”.")
+    : L("لو رجعت ربطته، Meta تعطي أرقام آخر ٣٠ يوم بس للحساب، والأرقام الأقدم ترجع بس من النسخة الاحتياطية.", "If you reconnect it, Meta only provides the last 30 days of account data; older numbers can only be restored from a backup.");
+  $("#delAccConfirm").value = ""; $("#delAccErr").innerHTML = ""; $("#delAccGo").disabled = true;
+  $("#delAccConfirm").oninput = () => ($("#delAccGo").disabled = $("#delAccConfirm").value.trim().replace(/^@/, "").toLowerCase() !== acc.username.toLowerCase());
+  $("#delAccGo").onclick = async () => {
+    $("#delAccGo").disabled = true;
+    try {
+      await api(`/api/accounts/${encodeURIComponent(acc.id)}`, { method: "DELETE" });
+      delAccDlg.close();
+      state.id = null;
+      Object.assign(state, { report: null, reply: null, won: null, dm: null, leadFilter: null, leadType: null, recycleFilter: null, recycleMore: false });
+      await loadAccounts(); load();
+    } catch (err) { $("#delAccErr").innerHTML = `<div class="err">${esc(err.message)}</div>`; $("#delAccGo").disabled = false; }
+  };
+  delAccDlg.showModal();
+};
+$("#weeklyBtn").onclick = () => open(`/weekly.html?id=${encodeURIComponent(state.id || "")}`, "_blank");
+$("#monthlyBtn").onclick = () => open(`/monthly.html?id=${encodeURIComponent(state.id || "")}`, "_blank");
+// ملف إكسل للفترة المختارة (يتنزّل مباشرة)
+$("#exportBtn").onclick = () => {
+  if (!state.id) return;
+  const a = document.createElement("a");
+  a.href = `/api/accounts/${encodeURIComponent(state.id)}/export?from=${state.from}&to=${state.to}`;
+  a.download = "";
+  document.body.append(a); a.click(); a.remove();
+};
+$("#addBtn").onclick = () => { $("#addErr").innerHTML = ""; addDlg.showModal(); };
+$("#addSave").onclick = async () => {
+  const btn = $("#addSave");
+  btn.disabled = true; btn.textContent = L("جاري الربط…", "Connecting…");
+  try {
+    const { id } = await api("/api/accounts", { method: "POST", body: { token: $("#tok").value.trim(), business: $("#biz").value, goal: $("#goal").value } });
+    addDlg.close(); $("#tok").value = "";
+    state.id = id; await loadAccounts(); load();
+  } catch (e) {
+    $("#addErr").innerHTML = `<div class="err">${esc(e.message)}</div>`;
+  } finally { btn.disabled = false; btn.textContent = L("ربط الحساب", "Connect account"); }
+};
+
+setRange(30);
+loadAccounts().then(load).catch((e) => ($("#app").innerHTML = `<div class="err">${esc(e.message)}</div>`));
+</script>
+</body>
+</html>

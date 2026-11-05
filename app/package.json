@@ -1,0 +1,12 @@
+{
+  "name": "insta-analyzer",
+  "version": "1.0.0",
+  "description": "لوحة تحليل حساب انستجرام تشتغل على جهازك، مجانية وبدون ذكاء اصطناعي",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env --disable-warning=ExperimentalWarning server.js"
+  },
+  "license": "SEE LICENSE IN ../LICENSE"
+}

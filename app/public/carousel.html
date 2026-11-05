@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>صانع الكاروسيل والريل</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<script src="/theme.js"></script>
+<script src="/i18n-labels.js"></script>
+<script src="/profile.js"></script>
+<script src="/i18n.js"></script>
+<script src="/i18n/carousel.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f4f3f0; --surface: #fcfcfb; --surface-2: #f0efeb; --border: #e3e1dc;
+  --text: #0b0b0b; --text-2: #52514e; --muted: #8a8984;
+  --accent: #2a78d6; --accent-soft: #e3eefb;
+  --good: #1f7a3a; --good-soft: #e3f3e7; --bad: #b3261e; --bad-soft: #fbe6e4; --warn: #8a5a00; --warn-soft: #fbf0d9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --border: #2f2f2c;
+    --text: #f0efec; --text-2: #c3c2b7; --muted: #8d8c85;
+    --accent: #3987e5; --accent-soft: #1d2d42;
+    --good: #5cc27a; --good-soft: #1b2e21; --bad: #ef7a72; --bad-soft: #3a1f1d; --warn: #f0c060; --warn-soft: #33290f;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: "IBM Plex Sans Arabic", system-ui, sans-serif; font-size: 15px; line-height: 1.6; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.tools { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+.tools .in { max-width: 1240px; margin: 0 auto; padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tools a.back { color: var(--accent); text-decoration: none; }
+.tools .title { font-weight: 700; margin-inline-end: auto; }
+.btn, select { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 7px 14px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.sm { padding: 3px 10px; font-size: 12.5px; border-radius: 8px; }
+.btn:disabled { opacity: .5; cursor: default; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 16px 16px 64px; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 18px; align-items: start; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+h2 { font-size: 16px; margin: 0 0 10px; }
+h3 { font-size: 14px; margin: 0 0 6px; }
+.sub { color: var(--text-2); font-size: 13.5px; margin: 0; }
+.muted { color: var(--muted); font-size: 12.5px; }
+.stack > * + * { margin-top: 14px; }
+.templates { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.tpl { text-align: start; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; cursor: pointer; }
+.tpl:hover { border-color: var(--accent); }
+.tpl b { display: block; }
+.tpl .goal { font-size: 12px; padding: 1px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chips { display: inline-flex; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 3px; }
+.chips button { border: 0; background: none; padding: 4px 12px; border-radius: 7px; cursor: pointer; color: var(--text-2); }
+.chips button.on { background: var(--accent); color: #fff; }
+.slide { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--surface); }
+.slide.cur { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.slide .head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.slide .n { width: 26px; height: 26px; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; font-size: 13px; font-weight: 600; flex: none; }
+.slide .role { flex: 1; min-width: 0; border: 0; background: none; font-weight: 600; color: var(--text-2); padding: 2px 0; }
+.slide textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; resize: vertical; }
+.slide textarea.t { font-weight: 600; }
+.slide textarea + textarea { margin-top: 6px; }
+.msgs { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+.msg { font-size: 12.5px; border-radius: 8px; padding: 3px 8px; }
+.msg.bad { background: var(--bad-soft); color: var(--bad); }
+.msg.warn { background: var(--warn-soft); color: var(--warn); }
+.msg.tip { background: var(--surface-2); color: var(--text-2); }
+.msg.ok { background: var(--good-soft); color: var(--good); }
+.cols > * { min-width: 0; }
+.preview { position: sticky; top: 70px; }
+.tools select { max-width: 100%; min-width: 0; }
+#drafts { max-width: 260px; }
+.preview canvas.big { width: 100%; height: auto; border-radius: 10px; display: block; background: #000; }
+.thumbs { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 2px; }
+.thumbs canvas { width: 64px; height: 80px; border-radius: 6px; cursor: pointer; flex: none; outline: 2px solid transparent; }
+.thumbs canvas.cur { outline-color: var(--accent); }
+.kit li { margin: 4px 0; }
+.kit button.link { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; text-align: start; }
+details summary { cursor: pointer; font-weight: 600; }
+textarea#caption { width: 100%; min-height: 160px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; resize: vertical; }
+input.titleIn { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 6px 10px; min-width: 0; width: 220px; }
+.save-state { font-size: 12.5px; color: var(--muted); }
+.err { background: var(--bad-soft); color: var(--bad); border-radius: 10px; padding: 8px 12px; }
+@media (max-width: 900px) {
+  .cols { grid-template-columns: 1fr; }
+  .preview { position: static; order: -1; }
+  input.titleIn { width: 100%; }
+}
+</style>
+<link rel="stylesheet" href="/theme.css">
+</head>
+<body>
+<div class="tools"><div class="in">
+  <a class="back" href="/">→ اللوحة</a>
+  <span class="title">صانع الكاروسيل والستوري والريل</span>
+  <select id="account" aria-label="الحساب"></select>
+  <select id="drafts" aria-label="مسوداتي"></select>
+  <button class="btn" id="newBtn">+ جديد</button>
+  <span class="save-state" id="saveState"></span>
+  <button class="btn" data-lang-toggle>EN</button>
+    <button class="btn" data-theme-toggle>🌙</button>
+</div></div>
+
+<div class="wrap" id="app"><p class="sub">جاري التحميل…</p></div>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const EN = window.LANG === "en";
+const nf = new Intl.NumberFormat(EN ? "en-US" : "ar-SA-u-nu-latn-ca-gregory");
+const num = (x, d = 0) => (x == null ? "—" : nf.format(Math.round(x * 10 ** d) / 10 ** d));
+const AR = (n) => String(n).replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
+// أرقام الواجهة: هندية بالعربي، عادية بالإنجليزي (محتوى الشرائح يظل بـ AR)
+const D = (n) => (EN ? String(n) : AR(n));
+// حقول المحتوى العربي: بالإنجليزي تاخذ اتجاه النص اللي ينكتب فيها
+const CD = EN ? ' dir="auto"' : "";
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const params = new URLSearchParams(location.search);
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, { ...opts, headers: { "content-type": "application/json" }, body: opts.body && JSON.stringify(opts.body) });
+  if (res.status === 401) { location.href = "/login.html"; throw new Error(L("سجّل دخول", "Please sign in")); }
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || L("صار خطأ", "Something went wrong"));
+  return data;
+}
+
+// ===== القوالب من ملف مجالك (profiles/ أو data/profile.json). النص مثال تعدّله =====
+// {العرض} {كلمة} {إيموجي} {مجالك} تنعبى من ملف مجالك
+const S = (role, title, body = "") => ({ role, title, body });
+const ST = (title, body = "", sticker = "", role = "") => ({ role, title, body, sticker });
+const R = (role, title, body = "") => ({ role, title, body });
+const PF = window.PROFILE || {};
+const fill = (s) => (s || "").replaceAll("{العرض}", PF.offer?.[0] || "العرض").replaceAll("{كلمة}", PF.cta_word || "").replaceAll("{إيموجي}", PF.emoji || "").replaceAll("{مجالك}", PF.niche?.[0] || "مجالك");
+const pair = (x) => L(fill(x[0]), x[1] ?? x[0]);
+const questionsOf = (kit) => (kit?.questions || []).filter((q) => q.intent === "سؤال").map((q) => q.text);
+// قوالب تنبني من أسئلة جمهورك
+const DYNAMIC = {
+  qa: (kit) => {
+    const qs = [...questionsOf(kit), ...(PF.questions || [])].slice(0, 5);
+    return [
+      S("غلاف", `أكثر ${AR(qs.length)} أسئلة توصلني ${PF.about?.[0] || ""}`.trim(), "وجاوبتها كلها هنا 👇"),
+      ...qs.map((q, i) => S(`سؤال ${AR(i + 1)}`, q, "[جوابك في سطرين أو ثلاثة]")),
+      S("الخطوة الجاية", "عندك سؤال ثاني؟", "اكتبه في التعليقات وأجاوبه في الجزء الثاني.\nواحفظ الكاروسيل 🔖"),
+    ];
+  },
+  s_ask: (kit) => {
+    const qs = questionsOf(kit).slice(0, 3);
+    while (qs.length < 3) qs.push("[سؤال وصلك]");
+    return [
+      ST(`اسألني أي شي ${PF.about?.[0] || ""} ${PF.emoji || ""}`.replace(/\s+/g, " ").trim(), "أجاوب على الأسئلة بكرة", "question"),
+      ...qs.map((q) => ST(q, "[جوابك في سطرين]", "", "سؤال")),
+      ST("عندك سؤال ثاني؟", "راسلني بالخاص", "dm"),
+    ];
+  },
+};
+const build = (list = [], make) => list.map((t) => ({
+  key: t.key, name: pair(t.name), goal: t.goal, desc: pair(t.desc),
+  slides: t.dynamic ? DYNAMIC[t.key] || (() => []) : () => t.slides.map((s) => make(...s.map(fill))),
+}));
+const TEMPLATES = build(PF.templates?.carousel, (role, title, body) => S(role, title, body));
+const STORY_TEMPLATES = build(PF.templates?.story, (role, title, body, sticker) => ST(title, body, sticker || "", role));
+const REEL_TEMPLATES = build(PF.templates?.reel, (role, title, body) => R(role, title, body));
+// سرعة الكلام: كلمة بالثانية (تقريبي). نزيد نص ثانية بين كل جزء (وقفة أو قص)
+const SPEEDS = { slow: [2.0, L("بطيء", "slow")], normal: [2.4, L("عادي", "normal")], fast: [2.8, L("سريع", "fast")] };
+const secsOf = (s, speed) => words(s.title) / SPEEDS[speed || "normal"][0];
+const reelSecs = (d) => d.slides.reduce((a, s) => a + secsOf(s, d.speed), 0) + Math.max(0, d.slides.length - 1) * 0.5;
+const GREETING = /^(السلام|سلام|هلا|مرحبا|أهلا|اهلا|صباح|مساء|حياكم)/;
+
+function checkReelPart(s, i, total) {
+  const out = [], sec = secsOf(s, state.d.speed), r = state.kit.reel;
+  if (!s.title.trim()) out.push(["bad", L("اللي تقوله فاضي", "Nothing to say yet")]);
+  if (/\[[^\]]*\]/.test(s.title)) out.push(["bad", L("فيه خانة بين [ ] ما عبيتها", "There’s an unfilled [ ] blank")]);
+  if (i === 0) {
+    if (GREETING.test(s.title.trim())) out.push(["bad", L("لا تبدأ بالسلام أو الترحيب: في أول ٣ ثواني الناس يقررون يكملون أو يسحبون", "Don’t open with a greeting: people decide to stay or scroll in the first 3 seconds")]);
+    if (sec > 4) out.push(["warn", L(`البداية تاخذ ${AR(Math.round(sec))} ثواني. خلها ٣ ثواني (٧ كلمات تقريباً)`, `The hook takes ${Math.round(sec)} seconds. Keep it to 3 (about 7 words)`)]);
+    if (s.title && !/[0-9٠-٩؟?]/.test(s.title)) out.push(["tip", r?.question_lift ? L(`ريلزك اللي تبدأ بسؤال الناس يكملونها أكثر بـ ${AR(Math.round(r.question_lift * 100))}٪`, `Your reels that open with a question get watched ${Math.round(r.question_lift * 100)}% further`) : L("البداية بسؤال أو رقم توقف السحب", "Opening with a question or a number stops the scroll")]);
+    if (!s.body.trim()) out.push(["tip", L("حط نص على الشاشة في البداية: كثير يتفرجون بدون صوت", "Add on-screen text at the start: many people watch with sound off")]);
+  } else if (sec > 20) out.push(["warn", L(`هالجزء ${AR(Math.round(sec))} ثانية. قسّمه أو اختصره`, `This part is ${Math.round(sec)} seconds. Split or trim it`)]);
+  if (i === total - 1 && total > 1 && !CTA.test(s.title + " " + s.body) && !/منشن|اكتب|قل لي|قولي/.test(s.title)) out.push(["bad", L("آخر جزء ما فيه خطوة (احفظ، تابع، اكتب بالتعليقات، منشن)", "The last part has no call to action (save, follow, comment, tag)")]);
+  return out;
+}
+function checkReel(d) {
+  const out = [], r = state.kit.reel, t = reelSecs(d);
+  if (t > 60) out.push(["bad", L(`الريل ≈ ${AR(Math.round(t))} ثانية.${r?.long ? ` ريلزك اللي أطول من دقيقة الناس يشوفون ${AR(Math.round(r.long.ret * 100))}٪ منها بس` : " اختصره لأقل من دقيقة"}`, `The reel is ≈ ${Math.round(t)} seconds.${r?.long ? ` People only watch ${Math.round(r.long.ret * 100)}% of your reels over a minute` : " Cut it to under a minute"}`)]);
+  else if (t > 45 && /^(٣٠–٦٠|30–60)/.test(r?.best_len?.name || "")) out.push(["ok", L(`≈ ${AR(Math.round(t))} ثانية: داخل أفضل طول عندك (٣٠–٦٠)`, `≈ ${Math.round(t)} seconds: within your best length (30–60)`)]);
+  else if (t < 12 && d.slides.length > 1) out.push(["tip", L("قصير جداً. تأكد إن الفكرة واضحة", "Very short. Make sure the idea comes across")]);
+  if (d.goal === "بيع" && !SELL_CTA.test(d.slides.at(-1)?.title || "")) out.push(["bad", L(`ريل بيع: آخر جملة لازم تقول وش يسوي بالضبط (اكتب «${PF.cta_word}» بالتعليقات، أو الرابط في البايو)`, `Sales reel: the last line must say exactly what to do (comment “${PF.cta_word}”, or link in bio)`)]);
+  const issues = d.slides.reduce((a, s, i) => a + checkReelPart(s, i, d.slides.length).filter((m) => m[0] === "bad").length, 0);
+  if (issues) out.push(["warn", L(`فيه ${problems(issues)} لازم تصلحها في الأجزاء تحت`, `${problems(issues)} to fix in the parts below`)]);
+  else if (!out.some((m) => m[0] === "bad" || m[0] === "warn")) out.push(["ok", L("السكربت جاهز للتصوير ✓", "Script is ready to film ✓")]);
+  return out;
+}
+
+const W = 1080, PAD = 96;
+const IG = ["#4f5bd5", "#962fbf", "#d62976", "#fa7e1e"];
+const THEMES = {
+  dark: { name: L("غامق", "Dark"), bg: "#000", title: "#fff", body: "#cfcfcf", muted: "#8a8a8a", accent: "grad" },
+  light: { name: L("فاتح", "Light"), bg: "#faf7f4", title: "#121212", body: "#3d3d3d", muted: "#8a8580", accent: "#d62976" },
+  grad: { name: L("تدرّج انستجرام", "Instagram gradient"), bg: "grad", title: "#fff", body: "rgba(255,255,255,.9)", muted: "rgba(255,255,255,.75)", accent: "#fff" },
+};
+const FONT = '"IBM Plex Sans Arabic"';
+
+function gradient(ctx, x0, y0, x1, y1) {
+  const g = ctx.createLinearGradient(x0, y0, x1, y1);
+  IG.forEach((c, i) => g.addColorStop(i / (IG.length - 1), c));
+  return g;
+}
+
+// تقسيم النص لأسطر حسب العرض (يحترم سطور الإنتر)
+function wrap(ctx, text, max) {
+  const lines = [];
+  for (const para of String(text || "").split("\n")) {
+    let line = "";
+    for (const w of para.split(/\s+/).filter(Boolean)) {
+      const test = line ? line + " " + w : w;
+      if (ctx.measureText(test).width > max && line) { lines.push(line); line = w; } else line = test;
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+// أكبر خط يخلي النص يدخل في عدد الأسطر والارتفاع المسموح
+function fit(ctx, text, weight, max, min, maxH, lh) {
+  for (let size = max; size >= min; size -= 4) {
+    ctx.font = `${weight} ${size}px ${FONT}`;
+    const lines = wrap(ctx, text, W - PAD * 2);
+    if (lines.length * size * lh <= maxH) return { size, lines };
+  }
+  ctx.font = `${weight} ${min}px ${FONT}`;
+  return { size: min, lines: wrap(ctx, text, W - PAD * 2) };
+}
+function drawLines(ctx, lines, y, size, lh, color) {
+  ctx.fillStyle = color;
+  for (const l of lines) { ctx.fillText(l, W - PAD, y + size); y += size * lh; }
+  return y;
+}
+
+const STICKERS = EN
+  ? { "": "No sticker", poll: "📊 Poll", question: "❓ Question", quiz: "✅ Quiz", slider: "😍 Emoji slider", link: "🔗 Link", countdown: "⏳ Countdown", dm: "💬 “DM me”" }
+  : { "": "بدون ملصق", poll: "📊 تصويت", question: "❓ سؤال", quiz: "✅ اختبار", slider: "😍 شريط إيموجي", link: "🔗 رابط", countdown: "⏳ عد تنازلي", dm: "💬 «راسلني»" };
+const heightOf = (d) => (d.format === "story" ? 1920 : 1350);
+
+// preview = يرسم مكان الملصق (بس في المعاينة، الصور المصدّرة بدونه لأنك تحط الملصق الحقيقي في انستجرام)
+function drawSlide(canvas, slide, i, total, design, handle, preview = false) {
+  const t = THEMES[design.theme] || THEMES.dark;
+  const story = design.format === "story", H = heightOf(design);
+  // الستوري: انستجرام يغطي أعلى ٢٥٠ وأسفل ٣٤٠ بكسل تقريباً (الاسم والرد)، فالكلام بينهم
+  const top = story ? 300 : 0, bottom = story ? 340 : 0;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  ctx.direction = "rtl"; ctx.textAlign = "right"; ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = t.bg === "grad" ? gradient(ctx, 0, H, W, 0) : t.bg;
+  ctx.fillRect(0, 0, W, H);
+  const accent = t.accent === "grad" ? gradient(ctx, 0, 0, W, 0) : t.accent;
+  const isCover = i === 0, isLast = i === total - 1 && total > 1;
+  const hasSticker = story && slide.sticker;
+  const stickerH = hasSticker ? 300 : 0;
+
+  if (t.bg !== "grad" && !story) { ctx.fillStyle = accent; ctx.fillRect(0, 0, W, 14); }
+  if (!story) {
+    ctx.font = `600 34px ${FONT}`; ctx.fillStyle = t.muted; ctx.textAlign = "left";
+    ctx.fillText(`${AR(i + 1)}/${AR(total)}`, PAD, 110);
+    ctx.textAlign = "right";
+  }
+
+  const d = (slide.role || "").match(/[0-9٠-٩]+/);
+  if (d && !isCover && !isLast && !story) {
+    ctx.save(); ctx.globalAlpha = design.theme === "light" ? 0.07 : 0.12;
+    ctx.font = `700 520px ${FONT}`; ctx.fillStyle = t.title; ctx.textAlign = "left";
+    ctx.fillText(AR(d[0]), PAD - 30, H - 260); ctx.restore();
+  }
+
+  const areaTop = top + (story ? 40 : 0), areaBottom = H - bottom - stickerH - (story ? 40 : 0);
+  if (isCover || story) {
+    // الغلاف (والستوري كلها): الكلام في النص
+    const title = fit(ctx, slide.title, 700, story ? 104 : 112, 60, (areaBottom - areaTop) * 0.62, 1.25);
+    const sub = slide.body ? fit(ctx, slide.body, 500, story ? 54 : 50, 34, (areaBottom - areaTop) * 0.3, 1.45) : null;
+    const blockH = title.lines.length * title.size * 1.25 + (sub ? 64 + sub.lines.length * sub.size * 1.45 : 0) + (slide.role && story ? 80 : 0);
+    let y = Math.max(isCover && !story ? 220 : areaTop, areaTop + (areaBottom - areaTop - blockH) / 2 - (story ? 0 : 40));
+    if (story && slide.role) { ctx.font = `700 42px ${FONT}`; ctx.fillStyle = accent; ctx.fillText(slide.role, W - PAD, y + 42); y += 80; }
+    ctx.font = `700 ${title.size}px ${FONT}`;
+    y = drawLines(ctx, title.lines, y, title.size, 1.25, t.title);
+    if (sub) { ctx.fillStyle = accent; ctx.fillRect(W - PAD - 120, y + 28, 120, 8); ctx.font = `500 ${sub.size}px ${FONT}`; drawLines(ctx, sub.lines, y + 64, sub.size, 1.45, t.body); }
+    if (isCover && !story) {
+      ctx.font = `600 40px ${FONT}`; ctx.fillStyle = t.title; ctx.textAlign = "left";
+      ctx.fillText("اسحب ←", PAD, H - PAD);
+      ctx.textAlign = "right";
+    }
+  } else {
+    let y = 200;
+    if (slide.role) { ctx.font = `700 40px ${FONT}`; ctx.fillStyle = accent; ctx.fillText(slide.role, W - PAD, y + 40); y += 80; }
+    const title = fit(ctx, slide.title, 700, isLast ? 96 : 80, 52, isLast ? 420 : 380, 1.28);
+    ctx.font = `700 ${title.size}px ${FONT}`;
+    y = drawLines(ctx, title.lines, y, title.size, 1.28, t.title) + 36;
+    if (slide.body) {
+      const body = fit(ctx, slide.body, 400, 50, 32, H - y - 200, 1.6);
+      ctx.font = `400 ${body.size}px ${FONT}`;
+      drawLines(ctx, body.lines, y, body.size, 1.6, t.body);
+    }
+  }
+
+  // مكان الملصق (المعاينة بس)
+  if (hasSticker && preview) {
+    const bx = PAD + 80, bw = W - 2 * (PAD + 80), by = H - bottom - stickerH, bh = 220;
+    ctx.save(); ctx.setLineDash([18, 14]); ctx.lineWidth = 5; ctx.strokeStyle = t.muted;
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 36); ctx.stroke(); ctx.restore();
+    ctx.font = `600 44px ${FONT}`; ctx.fillStyle = t.muted; ctx.textAlign = "center";
+    if (EN) ctx.direction = "ltr";
+    ctx.fillText(L(`${STICKERS[slide.sticker]} هنا`, `${STICKERS[slide.sticker]} here`), W / 2, by + bh / 2 + 16);
+    ctx.direction = "rtl"; ctx.textAlign = "right";
+  }
+
+  if (story) {
+    // شريط المتابعة فوق مثل انستجرام (المعاينة بس)
+    if (preview) {
+      const gap = 10, w = (W - 2 * 40 - gap * (total - 1)) / total;
+      for (let k = 0; k < total; k++) { ctx.fillStyle = k <= i ? "rgba(255,255,255,.9)" : "rgba(255,255,255,.35)"; ctx.fillRect(W - 40 - (k + 1) * w - k * gap, 40, w, 8); }
+    }
+    return;
+  }
+  ctx.font = `600 34px ${FONT}`; ctx.fillStyle = t.muted; ctx.textAlign = "right";
+  ctx.fillText(handle ? "@" + handle : "", W - PAD, H - PAD);
+  ctx.textAlign = "left";
+  if (isLast) { ctx.fillStyle = t.title; ctx.font = `600 36px ${FONT}`; ctx.fillText("احفظه 🔖  شاركه ✈️", PAD, H - PAD); }
+}
+
+// ===== الفحص: قواعد ثابتة =====
+const CTA = /تعليق|التعليقات|البايو|الخاص|سجّل|سجل|احجز|راسل|واتس|تواصل|احفظ|شارك|تابع|ارسل|أرسل/;
+const SELL_CTA = /تعليق|التعليقات|البايو|الخاص|احجز|سجّل|سجل|راسل|واتس|رابط/;
+const problems = (k) => (EN ? plural(k, "issue", "issues") : k === 1 ? "مشكلة وحدة" : k === 2 ? "مشكلتين" : `${AR(k)} مشاكل`);
+const words = (s) => String(s || "").split(/\s+/).filter(Boolean).length;
+function checkSlide(s, i, total) {
+  const out = [];
+  if (state.d?.format === "story") return checkFrame(s, i, total, out);
+  if (!s.title.trim()) out.push(["bad", L("العنوان فاضي", "Title is empty")]);
+  if (/\[[^\]]*\]/.test(s.title + s.body)) out.push(["bad", L("فيه خانة بين [ ] ما عبيتها", "There’s an unfilled [ ] blank")]);
+  if (i === 0) {
+    if (words(s.title) > 10) out.push(["warn", L(`عنوان الغلاف ${AR(words(s.title))} كلمة. خله ١٠ أو أقل عشان ينقرا بلمحة`, `Cover title is ${words(s.title)} words. Keep it to 10 or fewer so it reads at a glance`)]);
+    if (s.title && !/[0-9٠-٩؟?]/.test(s.title)) out.push(["tip", L("الغلاف يشد أكثر لما فيه رقم أو سؤال", "Covers grab more attention with a number or a question")]);
+  } else if (words(s.title) > 12) out.push(["warn", L("العنوان طويل. خل الفكرة في العنوان والتفاصيل تحت", "Title is long. Put the idea in the title and details below")]);
+  const b = words(s.body);
+  if (b > 60) out.push(["bad", L(`${AR(b)} كلمة. هذا كثير لشريحة وحدة، قسّمها لشريحتين`, `${b} words. Too much for one slide, split it in two`)]);
+  else if (b > 40) out.push(["warn", L(`${AR(b)} كلمة. الناس تسحب بسرعة، حاول تخليها ٤٠ أو أقل`, `${b} words. People swipe fast, aim for 40 or fewer`)]);
+  if (i === total - 1 && total > 1 && !CTA.test(s.title + " " + s.body)) out.push(["bad", L("آخر شريحة ما فيها خطوة جاية (تعليق، خاص، رابط، احفظ)", "The last slide has no next step (comment, DM, link, save)")]);
+  return out;
+}
+// فحص الستوري: كلام أقل، وملصقات تفاعلية، وآخر ستوري فيها خطوة
+function checkFrame(s, i, total, out) {
+  if (!s.title.trim()) out.push(["bad", L("العنوان فاضي", "Title is empty")]);
+  if (/\[[^\]]*\]/.test(s.title + s.body)) out.push(["bad", L("فيه خانة بين [ ] ما عبيتها", "There’s an unfilled [ ] blank")]);
+  const w = words(s.title) + words(s.body);
+  if (w > 40) out.push(["bad", L(`${AR(w)} كلمة. الستوري تنقرا في ٣ ثواني، قسّمها`, `${w} words. A story gets read in 3 seconds, split it`)]);
+  else if (w > 25) out.push(["warn", L(`${AR(w)} كلمة. خلها ٢٥ أو أقل`, `${w} words. Keep it to 25 or fewer`)]);
+  if (i === 0 && !s.sticker && !/[؟?]/.test(s.title)) out.push(["tip", L("أول ستوري فيها سؤال أو تصويت توقف التخطي", "A question or poll in the first story stops the tap-through")]);
+  if (i === total - 1 && total > 1 && !["link", "dm"].includes(s.sticker) && !CTA.test(s.title + " " + s.body)) out.push(["bad", L("آخر ستوري ما فيها خطوة (ملصق رابط، أو «راسلني»)", "The last story has no next step (link sticker, or “DM me”)")]);
+  return out;
+}
+function checkAll(d) {
+  const out = [], n = d.slides.length;
+  if (d.format === "story") {
+    if (n < 3) out.push(["warn", L(`${AR(n)} ستوري قليلة. ٤–٦ تكفي تبني قصة`, `${plural(n, "story", "stories")} is too few. 4–6 is enough to tell a story`)]);
+    if (n > 8) out.push(["warn", L(`${AR(n)} ستوري. أغلب الناس يطلعون بعد ٥–٧`, `${n} stories. Most people drop off after 5–7`)]);
+    if (!d.slides.some((s) => ["poll", "question", "quiz", "slider"].includes(s.sticker))) out.push(["tip", L("حط ملصق تفاعلي (تصويت أو سؤال) في وحدة منها على الأقل. التفاعل يرفع وصول الستوريات الجاية", "Add an interactive sticker (poll or question) to at least one. Engagement lifts the reach of your next stories")]);
+    if (d.goal === "بيع" && !d.slides.some((s) => s.sticker === "link")) out.push(["bad", L("سلسلة بيع بدون ملصق رابط", "Sales series with no link sticker")]);
+    const issues = d.slides.reduce((a, s, i) => a + checkSlide(s, i, n).filter((m) => m[0] === "bad").length, 0);
+    if (issues) out.push(["warn", L(`فيه ${problems(issues)} لازم تصلحها في الستوريات تحت`, `${problems(issues)} to fix in the stories below`)]);
+    else if (!out.some((m) => m[0] !== "tip")) out.push(["ok", L("السلسلة جاهزة ✓", "Series is ready ✓")]);
+    return out;
+  }
+  if (n < 5) out.push(["warn", L(`${AR(n)} شرائح قليلة. ٥–١٠ أفضل عشان الناس تقضي وقت أطول`, `${plural(n, "slide", "slides")} is too few. 5–10 keeps people around longer`)]);
+  if (n > 10) out.push(["warn", L(`${AR(n)} شريحة. أغلب الناس يوقفون بعد ٨–١٠`, `${n} slides. Most people stop after 8–10`)]);
+  const last = d.slides[n - 1];
+  if (d.goal === "بيع" && last && !SELL_CTA.test(last.title + " " + last.body)) out.push(["bad", L(`بوست بيع: آخر شريحة لازم تقول وش يسوي بالضبط (اكتب «${PF.cta_word}» بالتعليقات، أو الرابط في البايو)`, `Sales post: the last slide must say exactly what to do (comment “${PF.cta_word}”, or link in bio)`)]);
+  if (d.goal !== "بيع" && !d.slides.some((s) => /احفظ/.test(s.title + s.body))) out.push(["tip", L("اطلب الحفظ («احفظه ترجع له»). الحفظ من أقوى الإشارات لانستجرام", "Ask for the save (e.g. “احفظه ترجع له”). Saves are one of Instagram’s strongest signals")]);
+  const titles = d.slides.map((s) => s.title.trim()).filter(Boolean);
+  if (new Set(titles).size < titles.length) out.push(["warn", L("فيه عناوين متكررة", "Some titles are repeated")]);
+  const issues = d.slides.reduce((a, s, i) => a + checkSlide(s, i, n).filter((m) => m[0] === "bad").length, 0);
+  if (issues) out.push(["warn", L(`فيه ${problems(issues)} لازم تصلحها في الشرائح تحت`, `${problems(issues)} to fix in the slides below`)]);
+  else if (!out.some((m) => m[0] !== "tip")) out.push(["ok", L("الهيكل جاهز ✓", "Structure is ready ✓")]);
+  return out;
+}
+
+// ===== الحالة =====
+const state = { id: params.get("id"), kit: null, draftId: params.get("draft") ? +params.get("draft") : null, d: null, cur: 0, dirty: false, saveTimer: null };
+const blank = (format = ["story", "reel"].includes(params.get("format")) ? params.get("format") : "carousel") => ({ format, goal: params.get("goal") || "إقناع", theme: "dark", slides: [], caption: "", topic: params.get("topic") || "", hook: params.get("hook") || "" });
+
+async function boot() {
+  const accounts = await api("/api/accounts");
+  if (!state.id || !accounts.some((a) => a.id === state.id)) state.id = (accounts.find((a) => !a.is_demo) || accounts[0])?.id;
+  $("#account").innerHTML = accounts.map((a) => `<option value="${esc(a.id)}">@${esc(a.username)}${a.is_demo ? L(" (تجريبي)", " (demo)") : ""}</option>`).join("");
+  $("#account").value = state.id;
+  if (!state.id) return ($("#app").innerHTML = `<p class="sub">${L("ما فيه حسابات مربوطة.", "No accounts connected.")}</p>`);
+  await document.fonts.load(`700 60px ${FONT}`).catch(() => {});
+  await Promise.all([document.fonts.load(`400 40px ${FONT}`), document.fonts.load(`500 40px ${FONT}`), document.fonts.load(`600 40px ${FONT}`)]).catch(() => {});
+  state.kit = await api(`/api/accounts/${encodeURIComponent(state.id)}/carousel-kit`);
+  await loadDrafts();
+  if (state.draftId) await openDraft(state.draftId); else { state.d = blank(); render(); }
+}
+
+async function loadDrafts() {
+  const list = await api(`/api/accounts/${encodeURIComponent(state.id)}/carousels`);
+  $("#drafts").innerHTML = `<option value="">${L("مسوداتي", "My drafts")} (${num(list.length)})</option>` + list.map((c) => `<option value="${c.id}" data-notr>${esc(c.title)} · ${new Date(c.updated_at * 1000).toLocaleDateString(EN ? "en-US" : "ar-SA-u-nu-latn-ca-gregory", { day: "numeric", month: "short" })}</option>`).join("");
+  $("#drafts").value = state.draftId || "";
+}
+async function openDraft(id) {
+  try {
+    const c = await api(`/api/carousels/${id}`);
+    state.draftId = c.id; state.d = { ...blank(), ...c.data }; state.cur = 0;
+  } catch { state.draftId = null; state.d = blank(); }
+  syncUrl(); render();
+}
+function syncUrl() {
+  history.replaceState(null, "", `?id=${encodeURIComponent(state.id)}${state.draftId ? `&draft=${state.draftId}` : ""}`);
+  $("#drafts").value = state.draftId || "";
+}
+
+// حفظ تلقائي بعد ثانية ونص من آخر تعديل
+function changed() {
+  state.dirty = true;
+  $("#saveState").textContent = L("تعديلات ما انحفظت…", "Unsaved changes…");
+  clearTimeout(state.saveTimer);
+  state.saveTimer = setTimeout(save, 1500);
+}
+// الحفظ واحد ورا الثاني (عشان المسودة الجديدة ما تنحفظ مرتين)، و flush يحفظ أي تعديل معلّق قبل ما نبدّل
+async function save() {
+  const run = (state.saving || Promise.resolve()).then(saveNow);
+  state.saving = run;
+  await run;
+  if (state.saving === run) state.saving = null;
+}
+async function flush() {
+  clearTimeout(state.saveTimer);
+  if (state.dirty) await save();
+  else if (state.saving) await state.saving;
+}
+async function saveNow() {
+  if (!state.d?.slides.length) return;
+  try {
+    const r = await api(`/api/accounts/${encodeURIComponent(state.id)}/carousels`, { method: "PUT", body: { id: state.draftId, title: ({ story: "ستوري: ", reel: "ريل: " }[state.d.format] || "") + (state.d.slides[0]?.title || "بدون عنوان"), data: state.d } });
+    const isNew = !state.draftId;
+    state.draftId = r.id; state.dirty = false;
+    $("#saveState").textContent = L("انحفظ ✓", "Saved ✓");
+    if (isNew) { await loadDrafts(); syncUrl(); }
+  } catch (e) { $("#saveState").textContent = L("ما انحفظ: ", "Not saved: ") + e.message; }
+}
+
+// ===== الواجهة =====
+function render() {
+  const d = state.d;
+  if (!d.slides.length) return renderStart();
+  if (d.format === "reel") return renderReel();
+  const kit = state.kit;
+  const n = d.slides.length, story = d.format === "story", unit = story ? "ستوري" : "شريحة";
+  state.cur = Math.min(state.cur, n - 1);
+  const msg = (m) => `<div class="msg ${m[0]}">${esc(m[1])}</div>`;
+  const carousels = kit.kinds.find((k) => k.kind === "CAROUSEL_ALBUM"), reels = kit.kinds.find((k) => k.kind === "REELS");
+  $("#app").innerHTML = `
+  <div class="cols">
+    <div class="stack">
+      <div class="card row">
+        <span class="badge" style="font-size:12.5px;padding:2px 10px;border-radius:99px;background:var(--surface-2)">${story ? L("سلسلة ستوري", "Story series") : L("كاروسيل", "Carousel")}</span>
+        <span class="sub">${L("الهدف", "Goal")}</span>
+        <div class="chips" id="goal">${["جذب", "إقناع", "بيع"].map((g) => `<button data-g="${g}" class="${d.goal === g ? "on" : ""}">${g}</button>`).join("")}</div>
+        <span class="sub" style="margin-inline-start:8px">${L("التصميم", "Design")}</span>
+        <div class="chips" id="theme">${Object.entries(THEMES).map(([k, t]) => `<button data-t="${k}" class="${d.theme === k ? "on" : ""}">${t.name}</button>`).join("")}</div>
+      </div>
+
+      <div class="card"><h2>${L("الفحص", "Checks")}</h2><div class="msgs" id="allChecks">${checkAll(d).map(msg).join("")}</div></div>
+
+      <div id="slides" class="stack">${d.slides.map((s, i) => `
+        <div class="slide ${i === state.cur ? "cur" : ""}" data-i="${i}">
+          <div class="head"><span class="n">${D(i + 1)}</span>
+            <input class="role" value="${esc(s.role)}" placeholder="${i === 0 && !story ? L("غلاف", "Cover") : L("عنوان صغير (اختياري)", "Label (optional)")}" aria-label="${L("العنوان الصغير", "Label")}"${CD}>
+            ${story ? `<select class="stk" aria-label="${L("الملصق", "Sticker")}">${Object.entries(STICKERS).map(([k, v]) => `<option value="${k}" ${(s.sticker || "") === k ? "selected" : ""}>${v}</option>`).join("")}</select>` : ""}
+            <button class="btn sm" data-up="${i}" ${i === 0 ? "disabled" : ""} title="${L("فوق", "Move up")}">↑</button>
+            <button class="btn sm" data-down="${i}" ${i === n - 1 ? "disabled" : ""} title="${L("تحت", "Move down")}">↓</button>
+            <button class="btn sm" data-del="${i}" title="${story ? L("احذف الشريحة", "Delete story") : L("احذف الشريحة", "Delete slide")}">✕</button></div>
+          <textarea class="t" rows="2" placeholder="${i === 0 ? L("الجملة اللي توقف السحب", "The line that stops the scroll") : L("العنوان", "Title")}"${CD}>${esc(s.title)}</textarea>
+          <textarea class="b" rows="3" placeholder="${story ? L("سطر ثاني (اختياري)", "Second line (optional)") : i === 0 ? L("سطر يشوّق (اختياري)", "A teaser line (optional)") : L("التفاصيل (٤٠ كلمة بالكثير)", "Details (40 words max)")}"${CD}>${esc(s.body)}</textarea>
+          <div class="msgs">${checkSlide(s, i, n).map(msg).join("")}</div>
+        </div>`).join("")}</div>
+      <div class="row"><button class="btn" id="addSlide">${L(`+ ${unit}`, story ? "+ Story" : "+ Slide")}</button><button class="btn" id="restart">${L("ابدأ من قالب ثاني", "Start from another template")}</button><button class="btn" id="delDraft">${L("حذف المسودة", "Delete draft")}</button></div>
+
+      <details class="card kit" ${kit.questions.length || kit.hooks.length ? "open" : ""}><summary>${L("مساعدات من حسابك", "Help from your account")}</summary>
+        <p class="sub" style="margin-top:8px">${carousels ? L(`الكاروسيل عندك يجيب ${num(carousels.saved)} حفظ بالمتوسط${reels ? ` مقابل ${num(reels.saved)} للريلز` : ""}.`, `Your carousels get ${num(carousels.saved)} saves on average${reels ? `, vs. ${num(reels.saved)} for reels` : ""}.`) : L(`ما نزّلت كاروسيل من سنة، فهذا بيكون جديد على جمهورك. الكاروسيل ينحفظ ويتشارك أكثر، وهذي إشارات قوية لانستجرام.`, `You haven’t posted a carousel in a year, so this will be new for your audience. Carousels get saved and shared more, and those are strong signals for Instagram.`)}
+          ${kit.topics?.best?.sell ? L(` أكثر موضوع يجيب عملاء: «${esc(kit.topics.best.sell)}».`, ` Topic that brings the most clients: “<span data-notr>${esc(kit.topics.best.sell)}</span>”.`) : ""}</p>
+        ${kit.hooks.length ? `<h3 style="margin-top:12px">${L("أقوى بداياتك (اضغط تحطها في الغلاف)", "Your strongest hooks (tap to use on the cover)")}</h3><ul>${kit.hooks.map((h, i) => `<li><button class="link" data-hook="${i}" data-notr${CD}>${esc(h.text)}</button> <span class="muted">${L(`اهتمام ${num(h.times, 1)}× عادتك`, `${num(h.times, 1)}× your usual interest`)}</span></li>`).join("")}</ul>` : ""}
+        ${kit.questions.length ? `<h3 style="margin-top:12px">${L("أسئلة من تعليقات جمهورك (اضغط تضيفها شريحة)", "Questions from your comments (tap to add as a slide)")}</h3><ul>${kit.questions.map((q, i) => `<li><button class="link" data-q="${i}" data-notr${CD}>${esc(q.text)}</button></li>`).join("")}</ul>` : ""}
+      </details>
+
+      ${story ? `<div class="card"><h2>${L("طريقة النشر", "How to post")}</h2>
+        <p class="sub">${L("نزّل الصور بالترتيب كستوريات، وحط الملصقات في انستجرام نفسه (الصور المصدّرة بدون مكان الملصق):", "Post the images in order as stories, and add the stickers in Instagram itself (exported images don’t include the sticker placeholder):")}</p>
+        <ol class="sub" style="padding-inline-start:20px">${d.slides.map((s, i) => `<li><span data-notr${CD}>${esc(s.title.slice(0, 50) || "—")}</span>${s.sticker ? ` ${L("←", "→")} <b>${STICKERS[s.sticker]}</b>` : ""}</li>`).join("")}</ol>
+        <p class="muted">${L("انشرها ورا بعض في نفس الوقت، عشان اللي يشوف الأولى يكمل للآخر.", "Post them back to back, so whoever sees the first one keeps going to the end.")}</p></div>` : `<div class="card">
+        <h2>${L("الكابشن", "Caption")}</h2>
+        <p class="sub" style="margin-bottom:8px">${L("أول سطر هو اللي ينشاف تحت الكاروسيل، فخله نفس فكرة الغلاف.", "The first line is what shows under the carousel, so match the cover’s idea.")}</p>
+        <textarea id="caption" placeholder="${L("اضغط «اكتبه من الشرائح» أو اكتب بنفسك", "Tap “Write from slides” or write your own")}"${CD}>${esc(d.caption)}</textarea>
+        <div class="row" style="margin-top:8px"><button class="btn" id="capFill">${L("اكتبه من الشرائح", "Write from slides")}</button><button class="btn primary" id="capCheck">${L("افحص الكابشن", "Check caption")}</button><button class="btn" id="capCopy">${L("نسخ", "Copy")}</button></div>
+        <div id="capOut" class="msgs"></div>
+      </div>`}
+    </div>
+
+    <div class="preview card">
+      <canvas class="big" id="big" width="${W}" height="${heightOf(d)}" ${story ? `style="max-width:340px;margin:0 auto"` : ""}></canvas>
+      <div class="thumbs" id="thumbs">${d.slides.map((_, i) => `<canvas data-i="${i}" class="${i === state.cur ? "cur" : ""}" ${story ? `style="width:54px;height:96px"` : ""}></canvas>`).join("")}</div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="exportAll">${L("تحميل كل الصور", "Download all images")}</button>
+        <button class="btn" id="exportOne">${L(`هذي ال${unit}`, story ? "This story" : "This slide")}</button>
+        ${navigator.canShare ? `<button class="btn" id="shareAll" title="${L("على الجوال: احفظ الصور في الألبوم", "On your phone: save the images to Photos")}">${L("مشاركة", "Share")}</button>` : ""}
+      </div>
+      <p class="muted" style="margin-top:8px">${story ? L("المقاس ١٠٨٠×١٩٢٠ (ستوري ٩:١٦). الكلام بعيد عن أعلى وأسفل الشاشة عشان ما يغطيه اسمك وخانة الرد.", "Size 1080×1920 (9:16 story). Text stays clear of the top and bottom so your name and the reply bar don’t cover it.") : L("المقاس ١٠٨٠×١٣٥٠ (عمودي ٤:٥)، وهو أكبر مساحة يعطيها انستجرام للكاروسيل.", "Size 1080×1350 (4:5 portrait), the largest Instagram allows for carousels.")}</p>
+    </div>
+  </div>`;
+  bind();
+  drawAll();
+}
+
+// ===== سكربت الريل =====
+const fmtSecs = (x) => (EN ? (x >= 60 ? `${Math.floor(x / 60)}:${String(Math.round(x % 60)).padStart(2, "0")} min` : `${Math.round(x)} sec`) : x >= 60 ? `${AR(Math.floor(x / 60))}:${AR(String(Math.round(x % 60)).padStart(2, "0"))} دقيقة` : `${AR(Math.round(x))} ثانية`);
+function timingHtml(d) {
+  const t = reelSecs(d), r = state.kit.reel, max = 90;
+  const pos = (x) => `${Math.min(100, (x / max) * 100)}%`;
+  const color = t > 60 ? "var(--bad)" : t >= 30 ? "var(--good)" : "var(--accent)";
+  return `<div style="display:flex;align-items:baseline;gap:8px"><b style="font-size:30px;color:${color}">≈ ${fmtSecs(t)}</b><span class="muted">${L(`على سرعة كلام ${SPEEDS[d.speed || "normal"][1]}`, `at a ${SPEEDS[d.speed || "normal"][1]} speaking pace`)}</span></div>
+    <div style="position:relative;height:10px;border-radius:99px;background:var(--surface-2);margin:10px 0 4px;overflow:hidden">
+      <div style="position:absolute;inset-inline-start:${pos(30)};width:calc(${pos(60)} - ${pos(30)});top:0;bottom:0;background:var(--good-soft)"></div>
+      <div style="position:absolute;inset-inline-start:0;width:${pos(t)};top:0;bottom:0;background:${color};opacity:.85;border-radius:99px"></div></div>
+    <div class="muted" style="display:flex;justify-content:space-between"><span>${L("٠", "0")}</span><span>${L("٣٠", "30")}</span><span>${L("٦٠", "60")}</span><span>${L("٩٠ ث", "90s")}</span></div>
+    ${r?.best_len ? `<p class="sub" style="margin-top:8px">${L(`أفضل طول عندك <b>${esc(r.best_len.name)}</b>: الناس يشوفون ${AR(Math.round(r.best_len.ret * 100))}٪ منها، ووصولها أعلى من عادتك بـ ${AR(Math.round(r.best_len.reach_lift * 100))}٪.`, `Your best length is <b>${esc(r.best_len.name)}</b>: people watch ${Math.round(r.best_len.ret * 100)}% of these, and their reach is ${Math.round(r.best_len.reach_lift * 100)}% above your usual.`)}</p>` : ""}`;
+}
+const spoken = (d) => d.slides.map((s) => s.title.trim()).filter(Boolean).join("\n\n");
+const withNotes = (d) => d.slides.map((s, i) => L(`${AR(i + 1)}. ${s.role || "جزء"} (≈ ${AR(Math.max(1, Math.round(secsOf(s, d.speed))))} ث)\n${s.title.trim()}${s.body.trim() ? `\n[الشاشة: ${s.body.trim()}]` : ""}`, `${i + 1}. ${s.role || "Part"} (≈ ${Math.max(1, Math.round(secsOf(s, d.speed)))}s)\n${s.title.trim()}${s.body.trim() ? `\n[On screen: ${s.body.trim()}]` : ""}`)).join("\n\n");
+
+function renderReel() {
+  const d = state.d, kit = state.kit, r = kit.reel, n = d.slides.length;
+  const msg = (m) => `<div class="msg ${m[0]}">${esc(m[1])}</div>`;
+  $("#app").innerHTML = `
+  <div class="cols">
+    <div class="stack">
+      <div class="card row">
+        <span class="badge" style="font-size:12.5px;padding:2px 10px;border-radius:99px;background:var(--surface-2)">${L("سكربت ريل", "Reel script")}</span>
+        <span class="sub">${L("الهدف", "Goal")}</span>
+        <div class="chips" id="goal">${["جذب", "إقناع", "بيع"].map((g) => `<button data-g="${g}" class="${d.goal === g ? "on" : ""}">${g}</button>`).join("")}</div>
+        <span class="sub" style="margin-inline-start:8px">${L("سرعة كلامك", "Speaking pace")}</span>
+        <div class="chips" id="speed">${Object.entries(SPEEDS).map(([k, v]) => `<button data-s="${k}" class="${(d.speed || "normal") === k ? "on" : ""}">${v[1]}</button>`).join("")}</div>
+      </div>
+
+      <div class="card"><h2>${L("الفحص", "Checks")}</h2><div class="msgs" id="allChecks">${checkReel(d).map(msg).join("")}</div></div>
+
+      <div id="slides" class="stack">${d.slides.map((s, i) => `
+        <div class="slide" data-i="${i}">
+          <div class="head"><span class="n">${D(i + 1)}</span>
+            <input class="role" value="${esc(s.role)}" placeholder="${i === 0 ? L("البداية", "Hook") : L("اسم الجزء", "Part name")}" aria-label="${L("اسم الجزء", "Part name")}"${CD}>
+            <span class="muted secs" style="white-space:nowrap">≈ ${D(Math.round(secsOf(s, d.speed)))}${L(" ث", "s")}</span>
+            <button class="btn sm" data-up="${i}" ${i === 0 ? "disabled" : ""} title="${L("فوق", "Move up")}">↑</button>
+            <button class="btn sm" data-down="${i}" ${i === n - 1 ? "disabled" : ""} title="${L("تحت", "Move down")}">↓</button>
+            <button class="btn sm" data-del="${i}" title="${L("احذف الجزء", "Delete part")}">✕</button></div>
+          <textarea class="t" rows="${i === 0 ? 2 : 3}" placeholder="${i === 0 ? L("أول جملة تقولها: سؤال أو رقم يوقف السحب", "Your opening line: a question or number that stops the scroll") : L("اللي تقوله", "What you say")}"${CD}>${esc(s.title)}</textarea>
+          <textarea class="b" rows="1" placeholder="${L("على الشاشة أو اللقطة (اختياري)", "On-screen text or shot (optional)")}"${CD}>${esc(s.body)}</textarea>
+          <div class="msgs">${checkReelPart(s, i, n).map(msg).join("")}</div>
+        </div>`).join("")}</div>
+      <div class="row"><button class="btn" id="addSlide">${L("+ جزء", "+ Part")}</button><button class="btn" id="restart">${L("ابدأ من قالب ثاني", "Start from another template")}</button><button class="btn" id="delDraft">${L("حذف المسودة", "Delete draft")}</button></div>
+
+      <details class="card kit" ${r?.hooks?.length || kit.questions.length ? "open" : ""}><summary>${L("مساعدات من حسابك", "Help from your account")}</summary>
+        ${r?.hooks?.length ? `<h3 style="margin-top:12px">${L("بدايات ريلزك اللي كمّلوها أكثر (اضغط تحطها في البداية)", "Reel hooks people watched furthest (tap to use as your hook)")}</h3><ul>${r.hooks.map((h, i) => `<li><button class="link" data-rhook="${i}" data-notr${CD}>${esc(h.text)}</button> <span class="muted">${r.by_pct ? L(`شافوا ${AR(Math.round(h.ret * 100))}٪`, `${Math.round(h.ret * 100)}% watched`) : L(`${AR(Math.round(h.watch))} ث`, `${Math.round(h.watch)}s`)}</span></li>`).join("")}</ul>` : ""}
+        ${kit.questions.length ? `<h3 style="margin-top:12px">${L("أسئلة جمهورك (اضغط تصير بداية الريل)", "Your audience’s questions (tap to use as the hook)")}</h3><ul>${kit.questions.slice(0, 8).map((q, i) => `<li><button class="link" data-rq="${i}" data-notr${CD}>${esc(q.text)}</button></li>`).join("")}</ul>` : ""}
+        ${!r?.hooks?.length && !kit.questions.length ? `<p class="sub" style="margin-top:8px">${L("ما فيه بيانات كفاية للحين.", "Not enough data yet.")}</p>` : ""}
+      </details>
+
+      <div class="card">
+        <h2>${L("الكابشن", "Caption")}</h2>
+        <p class="sub" style="margin-bottom:8px">${L("أول سطر ينشاف تحت الريل، فخله نفس البداية أو سؤال يكملها.", "The first line shows under the reel, so match the hook or add a question that builds on it.")}</p>
+        <textarea id="caption" placeholder="${L("اضغط «اكتبه من السكربت» أو اكتب بنفسك", "Tap “Write from script” or write your own")}"${CD}>${esc(d.caption)}</textarea>
+        <div class="row" style="margin-top:8px"><button class="btn" id="capFill">${L("اكتبه من السكربت", "Write from script")}</button><button class="btn primary" id="capCheck">${L("افحص الكابشن", "Check caption")}</button><button class="btn" id="capCopy">${L("نسخ", "Copy")}</button></div>
+        <div id="capOut" class="msgs"></div>
+      </div>
+    </div>
+
+    <div class="preview stack">
+      <div class="card" id="timing">${timingHtml(d)}</div>
+      <div class="card">
+        <h2>${L("التيليبرومبتر", "Teleprompter")}</h2>
+        <div id="prompter" data-notr${CD} style="background:#000;color:#fff;border-radius:10px;padding:18px;font-size:20px;line-height:1.9;max-height:52vh;overflow:auto;white-space:pre-wrap">${esc(spoken(d)) || `<span style="color:#888">${L("اكتب السكربت ويطلع هنا", "Write your script and it shows up here")}</span>`}</div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn primary" id="copySpoken">${L("نسخ النص للتيليبرومبتر", "Copy for teleprompter")}</button>
+          <button class="btn" id="copyNotes">${L("نسخ مع ملاحظات الشاشة", "Copy with on-screen notes")}</button>
+        </div>
+        <p class="muted" style="margin-top:8px">${L(`الوقت تقريبي على سرعة كلام ${SPEEDS[d.speed || "normal"][1]} (${AR(SPEEDS[d.speed || "normal"][0])} كلمة بالثانية)، مع نص ثانية بين كل جزء. سجّل وقت أول ريل وعدّل السرعة لو طلع مختلف.`, `Time is an estimate at a ${SPEEDS[d.speed || "normal"][1]} pace (${SPEEDS[d.speed || "normal"][0]} words per second), plus half a second between parts. Time your first reel and adjust the pace if it’s off.`)}</p>
+      </div>
+    </div>
+  </div>`;
+  bindReel();
+}
+
+function bindReel() {
+  const d = state.d, app = $("#app");
+  const msg = (m) => `<div class="msg ${m[0]}">${esc(m[1])}</div>`;
+  app.querySelectorAll("#goal button").forEach((b) => (b.onclick = () => { d.goal = b.dataset.g; render(); changed(); }));
+  app.querySelectorAll("#speed button").forEach((b) => (b.onclick = () => { d.speed = b.dataset.s; render(); changed(); }));
+  app.querySelectorAll(".slide").forEach((el) => {
+    const i = +el.dataset.i, s = d.slides[i];
+    el.querySelectorAll("input, textarea").forEach((x) => (x.oninput = () => {
+      s.role = $(".role", el).value; s.title = $(".t", el).value; s.body = $(".b", el).value;
+      // نحدّث الوقت والفحص بدون ما نعيد بناء الصفحة
+      $(".secs", el).textContent = `≈ ${D(Math.round(secsOf(s, d.speed)))}${L(" ث", "s")}`;
+      $(".msgs", el).innerHTML = checkReelPart(s, i, d.slides.length).map(msg).join("");
+      $("#allChecks").innerHTML = checkReel(d).map(msg).join("");
+      $("#timing").innerHTML = timingHtml(d);
+      $("#prompter").textContent = spoken(d);
+      changed();
+    }));
+  });
+  app.querySelectorAll("[data-up]").forEach((b) => (b.onclick = () => move(+b.dataset.up, -1)));
+  app.querySelectorAll("[data-down]").forEach((b) => (b.onclick = () => move(+b.dataset.down, 1)));
+  app.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => { d.slides.splice(+b.dataset.del, 1); render(); changed(); }));
+  $("#addSlide").onclick = () => { const at = Math.max(1, d.slides.length - 1); d.slides.splice(at, 0, R("", "", "")); render(); changed(); };
+  $("#restart").onclick = () => { if (confirm(L("تبدأ من قالب ثاني؟ السكربت الحالي بينمسح من هالمسودة.", "Start from another template? The current script will be cleared from this draft."))) { d.slides = []; render(); changed(); } };
+  $("#delDraft").onclick = async () => {
+    if (!confirm(L("تحذف هالمسودة؟", "Delete this draft?"))) return;
+    clearTimeout(state.saveTimer); state.dirty = false;
+    if (state.saving) await state.saving;
+    if (state.draftId) await api(`/api/carousels/${state.draftId}`, { method: "DELETE" });
+    state.draftId = null; state.d = blank("reel"); await loadDrafts(); syncUrl(); render();
+    $("#saveState").textContent = "";
+  };
+  app.querySelectorAll("[data-rhook]").forEach((b) => (b.onclick = () => { d.slides[0].title = state.kit.reel.hooks[+b.dataset.rhook].text; render(); changed(); }));
+  app.querySelectorAll("[data-rq]").forEach((b) => (b.onclick = () => { d.slides[0].title = state.kit.questions[+b.dataset.rq].text; render(); changed(); }));
+  const copy = async (text, btn) => { try { await navigator.clipboard.writeText(text); btn.textContent = L("انسخ ✓", "Copied ✓"); } catch { alert(text); } };
+  $("#copySpoken").onclick = (e) => copy(spoken(d), e.target);
+  $("#copyNotes").onclick = (e) => copy(withNotes(d), e.target);
+  $("#caption").oninput = (e) => { d.caption = e.target.value; changed(); };
+  $("#capFill").onclick = () => { d.caption = buildReelCaption(d); $("#caption").value = d.caption; changed(); };
+  $("#capCopy").onclick = async () => { try { await navigator.clipboard.writeText($("#caption").value); $("#capCopy").textContent = L("انسخ ✓", "Copied ✓"); } catch { $("#caption").select(); } };
+  $("#capCheck").onclick = checkCaption;
+}
+
+// كابشن الريل: البداية، وسطر من الحل، والدعوة
+function buildReelCaption(d) {
+  const s = d.slides, first = s[0]?.title.trim() || "", last = s.at(-1)?.title.trim() || "";
+  const mid = s.slice(1, -1).map((x) => x.title.trim()).find((t) => t && !/\[/.test(t));
+  return [first, "", mid ? mid.split(/[.!؟?]/)[0].trim() + "." : null, "", last || (d.goal === "بيع" ? `اكتب «${PF.cta_word}» في التعليقات وأرسل لك التفاصيل.` : "احفظه ترجع له 🔖")]
+    .filter((x) => x !== null).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function renderStart() {
+  const d = state.d, story = d.format === "story", reel = d.format === "reel", list = story ? STORY_TEMPLATES : reel ? REEL_TEMPLATES : TEMPLATES;
+  $("#app").innerHTML = `<div class="card stack">
+    <div class="chips" id="fmt"><button data-f="carousel" class="${d.format === "carousel" ? "on" : ""}">${L("كاروسيل (بوست)", "Carousel (post)")}</button><button data-f="story" class="${story ? "on" : ""}">${L("سلسلة ستوري", "Story series")}</button><button data-f="reel" class="${reel ? "on" : ""}">${L("سكربت ريل", "Reel script")}</button></div>
+    ${reel && state.kit.reel?.best_len ? `<p class="sub">${L(`من ريلزك: أفضل طول عندك <b>${esc(state.kit.reel.best_len.name)}</b>${state.kit.reel.long ? `، واللي أطول من دقيقة الناس يشوفون ${AR(Math.round(state.kit.reel.long.ret * 100))}٪ منها بس` : ""}. القوالب كلها تحت الدقيقة.`, `From your reels: your best length is <b>${esc(state.kit.reel.best_len.name)}</b>${state.kit.reel.long ? `, and people only watch ${Math.round(state.kit.reel.long.ret * 100)}% of reels over a minute` : ""}. All templates are under a minute.`)}</p>` : ""}
+    <div><h2>${L("ابدأ من قالب", "Start from a template")}</h2><p class="sub">${L(`كل قالب هيكل مجرّب، والنص مثال من مجالك تعدّله بكلامك.${d.hook ? ` الفكرة اللي جيت منها: «${esc(d.hook)}» — بتنحط في ${reel ? "البداية" : "الغلاف"}.` : ""}${d.topic ? ` الموضوع: ${esc(d.topic)}.` : ""}`, `Each template is a proven structure, with sample text from your field to rewrite in your own words.${d.hook ? ` Your idea: “<span data-notr>${esc(d.hook)}</span>” goes on the ${reel ? "hook" : "cover"}.` : ""}${d.topic ? ` Topic: <span data-notr>${esc(d.topic)}</span>.` : ""}`)}</p></div>
+    <div class="templates">${list.map((t) => `<button class="tpl" data-tpl="${t.key}"><span class="goal">${t.goal}</span><b style="margin-top:6px">${esc(t.name)}</b><span class="sub">${esc(t.desc)}</span></button>`).join("")}
+      <button class="tpl" data-tpl="empty"><b>${L("فاضي", "Blank")}</b><span class="sub">${L(`${story ? "٤ ستوريات فاضية" : reel ? "٤ أجزاء فاضية: البداية، المشكلة، الحل، الدعوة" : "٦ شرائح فاضية"} تكتبها من الصفر.`, `${story ? "4 blank stories" : reel ? "4 blank parts: hook, problem, fix, call to action" : "6 blank slides"} to write from scratch.`)}</span></button></div>
+  </div>`;
+  $("#app").querySelectorAll("#fmt button").forEach((b) => (b.onclick = () => { d.format = b.dataset.f; renderStart(); }));
+  $("#app").querySelectorAll("[data-tpl]").forEach((b) => (b.onclick = () => {
+    const t = list.find((x) => x.key === b.dataset.tpl);
+    d.slides = t ? t.slides(state.kit) : reel ? [R("البداية (٣ ثواني)", ""), R("المشكلة", ""), R("الحل", ""), R("الدعوة", "")] : story ? [ST("", "", "poll"), ST(""), ST(""), ST("", "", "link")] : [S("غلاف", ""), S("", ""), S("", ""), S("", ""), S("", ""), S("الخطوة الجاية", "")];
+    if (t && !params.get("goal")) d.goal = t.goal;
+    if (d.hook) d.slides[0].title = d.hook;
+    d.template = t?.key || "empty";
+    state.cur = 0; render(); changed();
+  }));
+}
+
+function bind() {
+  const d = state.d, app = $("#app");
+  app.querySelectorAll("#goal button").forEach((b) => (b.onclick = () => { d.goal = b.dataset.g; render(); changed(); }));
+  app.querySelectorAll("#theme button").forEach((b) => (b.onclick = () => { d.theme = b.dataset.t; render(); changed(); }));
+  app.querySelectorAll(".slide").forEach((el) => {
+    const i = +el.dataset.i, s = d.slides[i];
+    const upd = () => {
+      s.role = $(".role", el).value; s.title = $(".t", el).value; s.body = $(".b", el).value;
+      if ($(".stk", el)) s.sticker = $(".stk", el).value;
+      // نحدّث الرسم والرسائل بدون ما نعيد بناء الصفحة (عشان ما يضيع مكان الكتابة)
+      $(".msgs", el).innerHTML = checkSlide(s, i, d.slides.length).map((m) => `<div class="msg ${m[0]}">${esc(m[1])}</div>`).join("");
+      $("#allChecks").innerHTML = checkAll(d).map((m) => `<div class="msg ${m[0]}">${esc(m[1])}</div>`).join("");
+      select(i); changed();
+    };
+    el.querySelectorAll("input, textarea, select").forEach((x) => { x.oninput = upd; x.onfocus = () => select(i); });
+  });
+  app.querySelectorAll("[data-up]").forEach((b) => (b.onclick = () => move(+b.dataset.up, -1)));
+  app.querySelectorAll("[data-down]").forEach((b) => (b.onclick = () => move(+b.dataset.down, 1)));
+  app.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => { d.slides.splice(+b.dataset.del, 1); render(); changed(); }));
+  $("#addSlide").onclick = () => { const at = Math.max(1, d.slides.length - 1); d.slides.splice(at, 0, d.format === "story" ? ST("") : S("", "", "")); state.cur = at; render(); changed(); };
+  $("#restart").onclick = () => { if (confirm(L("تبدأ من قالب ثاني؟ الشرائح الحالية بتنمسح من هالمسودة.", "Start from another template? The current slides will be cleared from this draft."))) { d.slides = []; render(); changed(); } };
+  $("#delDraft").onclick = async () => {
+    if (!confirm(L("تحذف هالمسودة؟", "Delete this draft?"))) return;
+    clearTimeout(state.saveTimer); state.dirty = false;
+    if (state.saving) await state.saving;
+    if (state.draftId) await api(`/api/carousels/${state.draftId}`, { method: "DELETE" });
+    state.draftId = null; state.d = blank(); await loadDrafts(); syncUrl(); render();
+    $("#saveState").textContent = "";
+  };
+  app.querySelectorAll("[data-hook]").forEach((b) => (b.onclick = () => { d.slides[0].title = state.kit.hooks[+b.dataset.hook].text; state.cur = 0; render(); changed(); }));
+  app.querySelectorAll("[data-q]").forEach((b) => (b.onclick = () => {
+    const at = Math.max(1, d.slides.length - 1);
+    d.slides.splice(at, 0, S("سؤال من جمهوركم", state.kit.questions[+b.dataset.q].text, "")); state.cur = at; render(); changed();
+  }));
+  $("#thumbs").querySelectorAll("canvas").forEach((c) => (c.onclick = () => { select(+c.dataset.i); document.querySelector(`.slide[data-i="${c.dataset.i}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" }); }));
+  if ($("#caption")) {
+    $("#caption").oninput = (e) => { d.caption = e.target.value; changed(); };
+    $("#capFill").onclick = () => { d.caption = buildCaption(d); $("#caption").value = d.caption; changed(); };
+    $("#capCopy").onclick = async () => { try { await navigator.clipboard.writeText($("#caption").value); $("#capCopy").textContent = L("انسخ ✓", "Copied ✓"); } catch { $("#caption").select(); } };
+    $("#capCheck").onclick = checkCaption;
+  }
+  $("#exportAll").onclick = exportAll;
+  $("#exportOne").onclick = () => exportOne(state.cur);
+  if ($("#shareAll")) $("#shareAll").onclick = shareAll;
+}
+
+function move(i, dir) {
+  const s = state.d.slides, j = i + dir;
+  [s[i], s[j]] = [s[j], s[i]]; state.cur = j; render(); changed();
+}
+function select(i) {
+  if (state.cur !== i) {
+    document.querySelector(".slide.cur")?.classList.remove("cur");
+    document.querySelector(`.slide[data-i="${i}"]`)?.classList.add("cur");
+    document.querySelector("#thumbs canvas.cur")?.classList.remove("cur");
+    document.querySelector(`#thumbs canvas[data-i="${i}"]`)?.classList.add("cur");
+    state.cur = i;
+  }
+  drawAll();
+}
+let drawQueued = false;
+function drawAll() {
+  if (drawQueued) return;
+  drawQueued = true;
+  requestAnimationFrame(() => {
+    drawQueued = false;
+    const d = state.d, n = d.slides.length, handle = state.kit.username;
+    drawSlide($("#big"), d.slides[state.cur], state.cur, n, d, handle, true);
+    document.querySelectorAll("#thumbs canvas").forEach((c) => {
+      const i = +c.dataset.i, off = document.createElement("canvas");
+      drawSlide(off, d.slides[i], i, n, d, handle, true);
+      c.width = 216; c.height = Math.round((216 * heightOf(d)) / W); c.getContext("2d").drawImage(off, 0, 0, c.width, c.height);
+    });
+  });
+}
+
+// الكابشن: أول سطر من الغلاف، وبعدها عناوين الشرائح، وآخره الدعوة
+function buildCaption(d) {
+  const s = d.slides, cover = s[0], last = s[s.length - 1];
+  const middle = s.slice(1, -1).map((x) => x.title.trim()).filter((t) => t && !/\[/.test(t)).slice(0, 6);
+  const cta = (last?.body || last?.title || "").split("\n")[0].trim();
+  return [cover.title.trim(), cover.body.trim() || null, "", middle.length ? "في هالكاروسيل:" : null, ...middle.map((t) => "• " + t), "", cta || (d.goal === "بيع" ? `اكتب «${PF.cta_word}» في التعليقات وأرسل لك التفاصيل.` : "احفظه ترجع له 🔖"), ""]
+    .filter((x) => x !== null).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+async function checkCaption() {
+  const out = $("#capOut");
+  out.innerHTML = `<div class="msg tip">${L("جاري الفحص…", "Checking…")}</div>`;
+  try {
+    const r = await api(`/api/accounts/${encodeURIComponent(state.id)}/check-caption`, { method: "POST", body: { caption: $("#caption").value, kind: state.d.format === "reel" ? "REELS" : "CAROUSEL_ALBUM", goal: state.d.goal } });
+    const lvl = { bad: "bad", warn: "warn", tip: "tip", ok: "ok" };
+    out.innerHTML = r.items.map((x) => `<div class="msg ${lvl[x.level]}"><b>${esc(x.title)}</b>${x.detail ? ` — ${esc(x.detail)}` : ""}</div>`).join("");
+  } catch (e) { out.innerHTML = `<div class="msg bad">${esc(e.message)}</div>`; }
+}
+
+// ===== التصدير =====
+const fileName = (i) => `${state.d.format === "story" ? "story" : "slide"}-${String(i + 1).padStart(2, "0")}.png`;
+function slideBlob(i) {
+  const c = document.createElement("canvas"), d = state.d;
+  drawSlide(c, d.slides[i], i, d.slides.length, d, state.kit.username);
+  return new Promise((r) => c.toBlob(r, "image/png"));
+}
+function download(blob, name) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+async function exportOne(i) { download(await slideBlob(i), fileName(i)); }
+async function exportAll() {
+  const btn = $("#exportAll"); btn.disabled = true; btn.textContent = L("جاري التجهيز…", "Preparing…");
+  try {
+    const zip = new JSZip();
+    for (let i = 0; i < state.d.slides.length; i++) zip.file(fileName(i), await slideBlob(i));
+    if (state.d.caption && state.d.format !== "story") zip.file("caption.txt", state.d.caption);
+    download(await zip.generateAsync({ type: "blob" }), `${state.d.format === "story" ? "stories" : "carousel"}-${state.draftId || "new"}.zip`);
+  } finally { btn.disabled = false; btn.textContent = L("تحميل كل الصور", "Download all images"); }
+}
+async function shareAll() {
+  const files = [];
+  for (let i = 0; i < state.d.slides.length; i++) files.push(new File([await slideBlob(i)], fileName(i), { type: "image/png" }));
+  if (navigator.canShare({ files })) await navigator.share({ files }).catch(() => {});
+  else exportAll();
+}
+
+$("#account").onchange = async (e) => { const id = e.target.value; await flush(); state.id = id; state.draftId = null; boot(); };
+$("#drafts").onchange = async (e) => { const id = e.target.value; await flush(); if (id) openDraft(+id); };
+$("#newBtn").onclick = async () => { await flush(); state.draftId = null; state.d = blank(); state.d.hook = ""; syncUrl(); render(); $("#saveState").textContent = ""; };
+addEventListener("beforeunload", (e) => { if (state.dirty) { save(); e.preventDefault(); } });
+boot().catch((e) => ($("#app").innerHTML = `<div class="err">${esc(e.message)}</div>`));
+</script>
+</body>
+</html>

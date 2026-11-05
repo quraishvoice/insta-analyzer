@@ -1,0 +1,12 @@
+{
+  "name": "insta-analyzer",
+  "owner": { "name": "abourana003", "url": "https://instagram.com/abourana003" },
+  "description": "محلل حساب انستجرام يشتغل على جهازك",
+  "plugins": [
+    {
+      "name": "insta-analyzer",
+      "source": "./",
+      "description": "يركّب لوحة تحليل حساب انستجرام على جهازك ويربطها بحسابك ويضبطها على مجالك"
+    }
+  ]
+}

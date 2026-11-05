@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>دخول محلل انستجرام</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<script src="/theme.js"></script>
+<script src="/i18n-labels.js"></script>
+<script src="/i18n.js"></script>
+<script src="/i18n/login.js"></script>
+<style>
+:root { color-scheme: light; --bg: #f4f3f0; --surface: #fcfcfb; --border: #e3e1dc; --text: #0b0b0b; --text-2: #52514e; --accent: #2a78d6; --bad: #b3261e; --bad-soft: #fbe6e4; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { color-scheme: dark; --bg: #121211; --surface: #1a1a19; --border: #2f2f2c; --text: #f0efec; --text-2: #c3c2b7; --accent: #3987e5; --bad: #ef7a72; --bad-soft: #3a1f1d; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px; background: var(--bg); color: var(--text); font-family: "IBM Plex Sans Arabic", system-ui, sans-serif; }
+form { width: min(360px, 100%); background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; text-align: center; }
+h1 { font-size: 20px; margin: 0 0 6px; }
+p { color: var(--text-2); margin: 0 0 18px; font-size: 14px; line-height: 1.6; }
+input { width: 100%; font: inherit; font-size: 28px; letter-spacing: 8px; text-align: center; padding: 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); color: var(--text); direction: ltr; }
+button { width: 100%; margin-top: 12px; font: inherit; font-weight: 600; padding: 11px; border: 0; border-radius: 12px; background: var(--accent); color: #fff; cursor: pointer; }
+button:disabled { opacity: .5; }
+.err { background: var(--bad-soft); color: var(--bad); border-radius: 10px; padding: 8px; margin-top: 12px; font-size: 14px; }
+</style>
+<link rel="stylesheet" href="/theme.css">
+</head>
+<body>
+<form id="f">
+  <h1>محلل انستجرام</h1>
+  <p>اكتب رمز الدخول. تلقاه في اللوحة على الماك من زر «الجوال».</p>
+  <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" aria-label="رمز الدخول" required autofocus>
+  <button>دخول</button>
+  <div id="err"></div>
+</form>
+<script>
+const f = document.getElementById("f");
+f.onsubmit = async (e) => {
+  e.preventDefault();
+  const btn = f.querySelector("button");
+  btn.disabled = true;
+  const res = await fetch("/api/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: document.getElementById("code").value }) });
+  if (res.ok) return location.replace("/");
+  const data = await res.json().catch(() => ({}));
+  document.getElementById("err").innerHTML = `<div class="err">${(data.error || L("صار خطأ", "Something went wrong")).replace(/</g, "&lt;")}</div>`;
+  btn.disabled = false;
+};
+</script>
+</body>
+</html>

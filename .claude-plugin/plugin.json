@@ -1,0 +1,14 @@
+{
+  "name": "insta-analyzer",
+  "version": "1.0.0",
+  "description": "محلل حساب انستجرام يشتغل على جهازك: لوحة أرقام، نصائح، خطة نشر، متابعة العملاء، وصانع كاروسيل. مجاني وبياناتك ما تطلع من جهازك.",
+  "author": {
+    "name": "abourana003",
+    "url": "https://instagram.com/abourana003"
+  },
+  "repository": "https://github.com/quraishvoice/insta-analyzer",
+  "license": "SEE LICENSE IN LICENSE",
+  "skills": [
+    "./skills/"
+  ]
+}

@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>التقرير الأسبوعي</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<script src="/theme.js"></script>
+<script src="/i18n-labels.js"></script>
+<script src="/i18n.js"></script>
+<script src="/i18n/weekly.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f4f3f0; --surface: #fcfcfb; --surface-2: #f0efeb; --border: #e3e1dc;
+  --text: #0b0b0b; --text-2: #52514e; --muted: #8a8984;
+  --accent: #2a78d6; --accent-soft: #e3eefb;
+  --good: #1f7a3a; --good-soft: #e3f3e7; --bad: #b3261e; --bad-soft: #fbe6e4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --border: #2f2f2c;
+    --text: #f0efec; --text-2: #c3c2b7; --muted: #8d8c85;
+    --accent: #3987e5; --accent-soft: #1d2d42;
+    --good: #5cc27a; --good-soft: #1b2e21; --bad: #ef7a72; --bad-soft: #3a1f1d;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: "IBM Plex Sans Arabic", system-ui, sans-serif; font-size: 15px; line-height: 1.65; }
+button, select { font: inherit; color: inherit; }
+.tools { max-width: 860px; margin: 0 auto; padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tools a { color: var(--accent); text-decoration: none; margin-inline-end: auto; }
+.btn, select { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 7px 14px; cursor: pointer; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn:disabled { opacity: .4; cursor: default; }
+.page { max-width: 860px; margin: 0 auto 48px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px 36px; }
+h1 { font-size: 24px; margin: 0; }
+h2 { font-size: 17px; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); break-after: avoid; }
+.sub { color: var(--text-2); margin: 2px 0 0; }
+.muted { color: var(--muted); font-size: 13px; }
+.summary { background: var(--accent-soft); border-radius: 12px; padding: 14px 16px; margin-top: 18px; }
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.kpi { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; break-inside: avoid; }
+.kpi .l { color: var(--text-2); font-size: 13px; }
+.kpi .v { font-size: 22px; font-weight: 700; line-height: 1.3; }
+.kpi .d { font-size: 12.5px; }
+.up { color: var(--good); } .down { color: var(--bad); } .flat { color: var(--muted); }
+ol.steps { margin: 0; padding-inline-start: 22px; display: grid; gap: 10px; }
+ol.steps li { break-inside: avoid; }
+ol.steps b { display: block; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.two ul { margin: 0; padding-inline-start: 20px; display: grid; gap: 4px; }
+.post { border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; margin-bottom: 8px; break-inside: avoid; }
+.post .tag { font-size: 12px; background: var(--surface-2); border-radius: 99px; padding: 1px 9px; margin-inline-start: 6px; }
+.post a { color: inherit; text-decoration: none; }
+.foot { margin-top: 28px; color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--border); padding-top: 10px; }
+.loading { text-align: center; color: var(--text-2); padding: 60px 0; }
+@media (max-width: 640px) {
+  .page { padding: 20px 16px; border-radius: 0; border-inline: 0; }
+  .kpis { grid-template-columns: 1fr 1fr; }
+  .two { grid-template-columns: 1fr; }
+}
+@page { size: A4; margin: 12mm; }
+@media print {
+  :root, :root[data-theme] { color-scheme: light; --bg: #fff; --surface: #fff; --surface-2: #f0efeb; --border: #dddbd5; --text: #0b0b0b; --text-2: #52514e; --muted: #77766f; --accent: #2a78d6; --accent-soft: #eef4fc; --good: #1f7a3a; --bad: #b3261e; }
+  .tools { display: none; }
+  body { font-size: 12.5px; }
+  .page { border: 0; padding: 0; margin: 0; max-width: none; }
+  .kpi .v { font-size: 18px; }
+}
+</style>
+<link rel="stylesheet" href="/theme.css">
+</head>
+<body>
+<div class="tools">
+  <a href="/">→ اللوحة</a>
+  <select id="account" aria-label="الحساب"></select>
+  <button class="btn" id="prev">‹ الأسبوع السابق</button>
+  <button class="btn" id="next">الأسبوع التالي ›</button>
+  <button class="btn primary" onclick="print()">حفظ PDF</button>
+  <button class="btn" data-lang-toggle>EN</button>
+    <button class="btn" data-theme-toggle>🌙</button>
+</div>
+<div class="page" id="page"><div class="loading">جاري تجهيز التقرير…</div></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const EN = window.LANG === "en";
+const nf = new Intl.NumberFormat(EN ? "en-US" : "ar-SA-u-nu-latn-ca-gregory");
+const num = (x, d = 0) => (x == null ? "—" : nf.format(Math.round(x * 10 ** d) / 10 ** d));
+const pct = (x) => (x == null ? "—" : num(x * 100, 1) + L("٪", "%"));
+// يرجّع للدخول لو انتهت جلسة الجوال، ويرمي برسالة الخطأ
+async function getJSON(url) {
+  const res = await fetch(url);
+  if (res.status === 401) { location.href = "/login.html"; throw new Error(L("سجّل دخول", "Please sign in")); }
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || L("صار خطأ", "Something went wrong"));
+  return data;
+}
+const run = () => load().catch((e) => ($("#page").innerHTML = `<p class="loading">${L("ما قدرت أجهز التقرير", "Couldn’t build the report")}: ${esc(e.message)}</p>`));
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const TZ = "Asia/Riyadh";
+const addDays = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 864e5).toISOString().slice(0, 10);
+const dayName = (d) => new Date(d + "T12:00:00Z").toLocaleDateString(EN ? "en-US" : "ar-SA-u-nu-latn-ca-gregory", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+
+// الأسبوع من الأحد للسبت. الافتراضي: آخر أسبوع مكتمل
+function lastSunday() {
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date());
+  return addDays(today, -new Date(today + "T00:00:00Z").getUTCDay() - 7);
+}
+const params = new URLSearchParams(location.search);
+const state = { id: params.get("id"), from: /^\d{4}-\d{2}-\d{2}$/.test(params.get("from") || "") ? params.get("from") : lastSunday() };
+
+function delta(cur, prev, { lowerIsBetter = false } = {}) {
+  if (cur == null || prev == null || prev === 0) return `<span class="d flat">${L("ما فيه مقارنة", "No comparison")}</span>`;
+  const diff = ((cur - prev) / Math.abs(prev)) * 100;
+  if (Math.abs(diff) < 0.5) return `<span class="d flat">${L("— نفس الأسبوع اللي قبله", "— No change vs last week")}</span>`;
+  const good = lowerIsBetter ? diff < 0 : diff > 0;
+  return `<span class="d ${good ? "up" : "down"}">${diff > 0 ? "▲" : "▼"} ${L(`${num(Math.abs(diff))}٪ عن الأسبوع اللي قبله`, `${num(Math.abs(diff))}% vs last week`)}</span>`;
+}
+const kpi = (label, cur, prev, fmt = num) => `<div class="kpi"><div class="l">${label}</div><div class="v">${fmt(cur)}</div>${delta(cur, prev)}</div>`;
+const signed = (x) => (x == null ? "—" : (x > 0 ? "+" : "") + num(x));
+const first = (c) => esc((c || "").split("\n")[0].slice(0, 90)) || L("بدون كابشن", "No caption");
+
+async function load() {
+  const accounts = await getJSON("/api/accounts");
+  const live = accounts.filter((a) => !a.is_demo);
+  if (!state.id || !accounts.some((a) => a.id === state.id)) state.id = (live[0] || accounts[0])?.id;
+  $("#account").innerHTML = accounts.map((a) => `<option value="${esc(a.id)}">@${esc(a.username)}${a.is_demo ? L(" (تجريبي)", " (demo)") : ""}</option>`).join("");
+  $("#account").value = state.id;
+  if (!state.id) return ($("#page").innerHTML = `<p class="loading">${L("ما فيه حسابات مربوطة.", "No accounts connected.")}</p>`);
+
+  const to = addDays(state.from, 6);
+  history.replaceState(null, "", `?id=${encodeURIComponent(state.id)}&from=${state.from}`);
+  $("#next").disabled = state.from >= lastSunday();
+  $("#page").innerHTML = `<div class="loading">${L("جاري تجهيز التقرير…", "Preparing report…")}</div>`;
+  const r = await getJSON(`/api/accounts/${encodeURIComponent(state.id)}/report?from=${state.from}&to=${to}`);
+  render(r, to);
+}
+
+function render(r, to) {
+  const k = r.kpis, pk = r.prev_kpis, a = r.account, adv = r.advice;
+  const sl = r.sales.kpis, psl = r.sales.prev_kpis, cm = r.comments.kpis, pcm = r.comments.prev_kpis, st = r.stories.kpis, pst = r.stories.prev_kpis;
+  document.title = `${L("التقرير الأسبوعي", "Weekly report")} · @${a.username} · ${state.from}`;
+  const best = r.top[0], weak = r.bottom[0], seller = r.sales.top_posts[0];
+  const postBox = (label, p, extra) => p ? `<div class="post"><b>${label}</b><span class="tag">${esc(p.kind_name)}</span>
+    <div><a href="${esc(p.permalink)}" target="_blank" rel="noopener" data-notr>${L(`«${first(p.caption)}»`, `“${first(p.caption)}”`)}</a></div>
+    <div class="muted">${L(`الوصول ${num(p.reach)} · الحفظ ${num(p.saved)} · المشاركات ${num(p.shares)} · الاهتمام ${pct(p.intent)}`, `Reach ${num(p.reach)} · Saves ${num(p.saved)} · Shares ${num(p.shares)} · Interest ${pct(p.intent)}`)}${extra || ""}</div></div>` : "";
+
+  $("#page").innerHTML = `
+    <h1>${L("التقرير الأسبوعي", "Weekly report")}</h1>
+    <p class="sub">@${esc(a.username)} · ${L(`من ${dayName(state.from)} إلى ${dayName(to)}`, `${dayName(state.from)} – ${dayName(to)}`)}</p>
+    <div class="summary">${esc(adv.summary)}</div>
+
+    <h2>${L("الأرقام", "Key numbers")}</h2>
+    <div class="kpis">
+      ${kpi(L("البوستات", "Posts"), k.posts, pk.posts)}
+      ${kpi(L("إجمالي الوصول", "Total reach"), k.reach, pk.reach)}
+      ${kpi(L("متوسط الوصول للبوست", "Avg. reach per post"), k.avg_reach, pk.avg_reach)}
+      ${kpi(L("نمو المتابعين", "Follower growth"), k.follower_growth, pk.follower_growth, signed)}
+      ${kpi(L("زيارات البروفايل", "Profile visits"), k.profile_visits, pk.profile_visits)}
+      ${kpi(L("الستوري", "Stories"), st.count, pst.count)}
+      ${kpi(L("سألوا عن السعر أو التسجيل", "Asked about price or sign-up"), cm.leads, pcm.leads)}
+      ${sl.revenue != null || psl.revenue != null
+        ? kpi(L("المسجلين · الإيراد", "Sign-ups · Revenue"), sl.count, psl.count, (x) => `${num(x)}${x === sl.count && sl.revenue != null ? ` <span class="muted">· ${num(sl.revenue)} ${L("ريال", "SAR")}</span>` : ""}`)
+        : kpi(L("المسجلين", "Sign-ups"), sl.count, psl.count)}
+    </div>
+
+    <h2>${L(`أهم ${adv.recommendations.length >= 3 ? "٣ خطوات" : "الخطوات"} للأسبوع الجاي`, `${adv.recommendations.length >= 3 ? "Top 3 steps" : "Top steps"} for next week`)}</h2>
+    ${adv.recommendations.length ? `<ol class="steps">${adv.recommendations.slice(0, 3).map((x) => `<li><b>${esc(x.title)}</b>${esc(x.detail)}</li>`).join("")}</ol>` : `<p class="sub">${L("ما فيه توصيات عاجلة. كمّل على نفس الخط.", "Nothing urgent. Keep doing what you’re doing.")}</p>`}
+
+    <div class="two">
+      <div><h2 style="color:var(--good)">${L("✓ وش ماشي صح", "✓ What’s working")}</h2>${adv.wins.length ? `<ul>${adv.wins.slice(0, 5).map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : `<p class="sub">${L("ما فيه شي بارز هالأسبوع.", "Nothing stood out this week.")}</p>`}</div>
+      <div><h2 style="color:var(--bad)">${L("! وش يحتاج تحسين", "! What needs work")}</h2>${adv.problems.length ? `<ul>${adv.problems.slice(0, 5).map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : `<p class="sub">${L("ما فيه مشاكل واضحة.", "No clear problems.")}</p>`}</div>
+    </div>
+
+    ${best || seller ? `<h2>${L("بوستات الأسبوع", "Posts of the week")}</h2>
+      ${postBox(L("أعلى بوست في الاهتمام", "Highest interest"), best)}
+      ${seller && seller.id !== best?.id ? postBox(L("أكثر بوست جاب تسجيلات", "Most sign-ups"), seller, L(` · ${num(seller.attributed, seller.attributed % 1 ? 1 : 0)} مسجل`, ` · ${num(seller.attributed, seller.attributed % 1 ? 1 : 0)} ${seller.attributed === 1 ? "sign-up" : "sign-ups"}`)) : ""}
+      ${weak && weak.id !== best?.id ? postBox(L("أضعف بوست", "Weakest post"), weak) : ""}` : ""}
+
+    <h2>${L("خطة الأسبوع الجاي", "Plan for next week")}</h2>
+    <p style="margin:0">${esc(adv.next_steps)}</p>
+    ${adv.content_ideas.length ? `<ul style="margin:10px 0 0;padding-inline-start:20px">${adv.content_ideas.slice(0, 2).map((x) => `<li><b>${esc(x.title)}</b> (${esc(x.format)}): <span data-notr>${L(`«${esc(x.hook)}»`, `“${esc(x.hook)}”`)}</span></li>`).join("")}</ul>` : ""}
+
+    <div class="foot">${L(`من محلل انستجرام · الأرقام من Meta، والتسجيلات من إدخالك · المقارنة مع الأسبوع من ${r.period.prev_from} إلى ${r.period.prev_to}`, `From Instagram Analyzer · Numbers from Meta, sign-ups from your entries · Compared with ${r.period.prev_from} to ${r.period.prev_to}`)}</div>`;
+}
+
+$("#account").onchange = (e) => { state.id = e.target.value; run(); };
+$("#prev").onclick = () => { state.from = addDays(state.from, -7); run(); };
+$("#next").onclick = () => { state.from = addDays(state.from, 7); run(); };
+run();
+</script>
+</body>
+</html>
