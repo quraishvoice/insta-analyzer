@@ -8,6 +8,7 @@ import { audienceReport } from "./audience.js";
 import { unfollowSpikes } from "./unfollows.js";
 import { taggedList } from "./tagged.js";
 import { competitorsReport } from "./competitors.js";
+import { trendsReport } from "./trends.js";
 
 const TZ = process.env.TIMEZONE || "Asia/Riyadh";
 const TYPE_NAMES = { REELS: "ريلز", CAROUSEL_ALBUM: "كاروسيل", IMAGE: "صورة", VIDEO: "فيديو" };
@@ -295,6 +296,7 @@ export function report(accountId, from, to, prev = null) {
     unfollow_spikes: unfollowSpikes(accountId, from, to),
     tagged: taggedList(accountId),
     competitors: competitorsReport(accountId),
+    trends: trendsReport(accountId),
     by_type: byType,
     heatmap, time_slots,
     reels: posts.filter((p) => p.kind === "REELS").map(slim).sort((a, b) => (b.views || 0) - (a.views || 0)),

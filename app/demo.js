@@ -3,6 +3,7 @@ import { db, upsert } from "./db.js";
 import "./audience.js"; // ينشئ جدول الجمهور
 import "./tagged.js"; // ينشئ جدول الوسوم
 import "./competitors.js"; // ينشئ جداول المنافسين
+import "./trends.js"; // ينشئ جداول الهاشتاقات
 import { classify } from "./intent.js";
 
 let seed = 7;
@@ -73,6 +74,34 @@ export function loadDemo() {
         .run(`demo_comp_${i}_${k}`, user, new Date(Date.now() - t * 864e5).toISOString().slice(0, 19) + "+0000", type === "REELS" ? "VIDEO" : type, type === "REELS" ? "REELS" : "FEED",
           pick(CAPTIONS[type]), likes, comments);
     }
+  }
+  // هاشتاقات وهمية: بوستات آخر ٧ أيام بأعمار وأرقام مختلفة، وكم بوست من «الأفضل» خلال السنة
+  for (const t of ["trend_tags", "trend_searches", "trend_media"]) db.prepare(`DELETE FROM ${t} WHERE account_id = 'demo'`).run();
+  const TT = [["تعليق_صوتي", 18], ["دوبلاج", 22], ["بودكاست", 35], ["voiceover", 60]];
+  const now = Math.floor(Date.now() / 1000);
+  TT.forEach(([tag], i) => db.prepare("INSERT INTO trend_tags (account_id, tag, tag_id, added_at, last_recent, last_top) VALUES ('demo', ?, ?, ?, ?, ?)").run(tag, `demo_tag_${i}`, now - 9 * 86400 + i, now - 3600, now - 3600));
+  const TCAP = [
+    ["REELS", "VIDEO", "قلدت ٥ أصوات كرتون في دقيقة وحدة 😂 أي واحد أقرب؟"], ["REELS", "VIDEO", "نفس الجملة بـ٣ نبرات: إعلان، وثائقي، كرتون"],
+    ["REELS", "VIDEO", "دبلجت مشهد مشهور باللهجة السعودية 🎬"], ["CAROUSEL_ALBUM", "FEED", "٧ أدوات أحتاجها عشان أبدأ بودكاست من البيت"],
+    ["REELS", "VIDEO", "صوتي قبل التمرين وبعد ٣٠ يوم 👂"], ["REELS", "VIDEO", "كواليس تسجيل إعلان في الاستوديو"],
+    ["IMAGE", "FEED", "وش أصعب شي في التعليق الصوتي برأيك؟"], ["REELS", "VIDEO", "خلّيت الذكاء الاصطناعي يكتب نص وأنا أأديه 🤖🎙️"],
+    ["CAROUSEL_ALBUM", "FEED", "أخطاء في المايك تخرب تسجيلك"], ["REELS", "VIDEO", "تحدي: اقرأ هالجملة بدون ما تتنفس"],
+  ];
+  for (let k = 0; k < 46; k++) {
+    const [kind, type, cap] = TCAP[k % TCAP.length], tag = TT[k % TT.length][0];
+    const age = 2 + rand() * 20, likes = Math.round((k === 2 ? 900 : k === 7 ? 620 : 15 + rand() * 160) * (age / 10));
+    const ts = new Date(Date.now() - (age + (k % 7) * 24) * 3600e3).toISOString().slice(0, 19) + "+0000";
+    db.prepare(`INSERT INTO trend_media (account_id, id, tags, timestamp, media_type, product_type, caption, likes, comments, permalink, seen_at, source)
+      VALUES ('demo', ?, ?, ?, ?, ?, ?, ?, ?, 'https://www.instagram.com/', ?, 'recent')`)
+      .run(`demo_tr_${k}`, JSON.stringify(k % 9 === 0 ? [tag, "دوبلاج"] : [tag]), ts, kind === "REELS" ? "VIDEO" : kind, type === "VIDEO" ? "REELS" : "FEED", cap,
+        likes, Math.round(likes * (0.02 + rand() * 0.06)), Math.floor(Date.parse(ts) / 1000 + age * 3600));
+  }
+  for (let k = 0; k < 5; k++) {
+    const [kind, type, cap] = TCAP[(k * 3) % TCAP.length], likes = Math.round(8000 + rand() * 40000);
+    db.prepare(`INSERT INTO trend_media (account_id, id, tags, timestamp, media_type, product_type, caption, likes, comments, permalink, seen_at, source)
+      VALUES ('demo', ?, ?, ?, ?, ?, ?, ?, ?, 'https://www.instagram.com/', ?, 'top')`)
+      .run(`demo_trtop_${k}`, JSON.stringify([TT[k % TT.length][0]]), new Date(Date.now() - (30 + k * 60) * 864e5).toISOString().slice(0, 19) + "+0000",
+        kind === "REELS" ? "VIDEO" : kind, type === "VIDEO" ? "REELS" : "FEED", cap, likes, Math.round(likes * 0.04), now - 3600);
   }
   const aud = db.prepare("INSERT INTO audience (account_id, date, kind, dim, key, value) VALUES ('demo', ?, ?, ?, ?, ?)");
   const audDay = new Intl.DateTimeFormat("en-CA", { timeZone: process.env.TIMEZONE || "Asia/Riyadh" }).format(new Date());

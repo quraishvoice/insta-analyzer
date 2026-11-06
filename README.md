@@ -13,6 +13,7 @@
 - **لوحة أرقام:** الوصول والتفاعل والمتابعين لأي فترة، مقارنة بالفترة اللي قبلها.
 - **مين جمهورك:** أعمار متابعينك وجنسهم ودولهم ومدنهم، ومين منهم يتفاعل فعلاً.
 - **المنافسين:** قارن نفسك بحسابات في مجالك: نموهم، وكم ينشرون، وتفاعل جمهورهم، وبوستاتهم اللي انفجرت (يحتاج صفحة فيسبوك مربوطة بحسابك).
+- **الرائج في هاشتاقاتك:** أسرع البوستات انتشار الحين في هاشتاقات مجالك، تتحدث كل ٤ ساعات (نفس ربط فيسبوك حق المنافسين).
 - **تابعوك وألغوا:** كم يتابعونك ويلغون كل يوم، وتنبيه لو يوم فيه إلغاء غير عادي مع البوست اللي قبله. وتنبيه لما أحد يحطك بوسم في بوسته.
 - **رسالة خاص تلقائية:** اللي يسأل عن السعر بالتعليقات توصله التفاصيل بالخاص خلال دقيقتين.
 - **نصائح من أرقامك:** أفضل وقت تنشر فيه، وأي نوع (ريلز، كاروسيل، صورة) يجيب وصول أو عملاء، وأي موضوع ينفع عندك.
@@ -70,7 +71,7 @@ Claude يثبّت الأداة، ويسألك كم سؤال عن مجالك عش
 
 **A local Instagram analytics dashboard. Free, no AI, and your data never leaves your computer.**
 
-It reads your numbers from the Instagram API and gives you rule-based advice, a weekly posting plan, lead tracking from comments, ready-made DM replies, a carousel/story/reel builder, weekly and monthly reports, phone access on your home Wi-Fi, and optional Telegram alerts. Arabic and English, light and dark.
+It reads your numbers from the Instagram API and gives you rule-based advice, a weekly posting plan, lead tracking from comments, competitor comparison, trending posts in your niche hashtags, ready-made DM replies, a carousel/story/reel builder, weekly and monthly reports, phone access on your home Wi-Fi, and optional Telegram alerts. Arabic and English, with light, dark and modern 3D themes.
 
 **You need:** a Mac or Windows PC, Claude Code, a public Professional (Creator or Business) Instagram account, and a free Meta developer app (Claude walks you through it).
 

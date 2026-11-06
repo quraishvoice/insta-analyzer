@@ -494,6 +494,16 @@ ol.steps { padding-inline-start: 20px; color: var(--text-2); font-size: 13.5px; 
   </div>
 </dialog>
 
+<dialog id="trendDlg">
+  <h3>هاشتاقات مجالك</h3>
+  <div id="trendBody"></div>
+  <div id="trendErr"></div>
+  <div class="actions">
+    <button class="btn" onclick="trendDlg.close()">إغلاق</button>
+    <button class="btn primary" id="trendSave">حفظ القائمة</button>
+  </div>
+</dialog>
+
 <dialog id="autoDlg">
   <h3>رسالة خاص تلقائية</h3>
   <div id="autoBody"></div>
@@ -861,6 +871,85 @@ function renderCompetitors(C, a) {
   </div>` : ""}`;
   $("#compBtn")?.addEventListener("click", openCompDialog);
 }
+
+// الرائج في هاشتاقاتك: أحدث بوستات كل هاشتاق مرتبة بسرعة انتشارها (التفاعل ÷ عمر البوست بالساعات)
+const tagChip = (t) => `<bdi data-notr dir="auto">#${esc(t)}</bdi>`;
+function trendRow(h, rising) {
+  const when = rising
+    ? L(`خلال ${num(h.hours)} ${h.hours >= 3 && h.hours <= 10 ? "ساعات" : "ساعة"}`, `in ${num(h.hours)} h`)
+    : `<bdi>${new Date(h.timestamp).toLocaleDateString(LOC, { day: "numeric", month: "short", year: "numeric" })}</bdi>`;
+  return `<div style="display:flex;gap:10px;align-items:baseline;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+    <div style="min-width:0">${rising ? `<span class="pill good" style="margin:0 0 0 6px" title="${L("تفاعل بالساعة: (اللايكات + ٢×التعليقات) ÷ عمر البوست", "Engagement per hour: (likes + 2×comments) ÷ the post's age")}"><bdi dir="ltr">${num(h.speed)}</bdi>/${L("ساعة", "h")}</span>` : ""}<span class="sub" style="font-size:12.5px">${h.tags.map(tagChip).join(" ")} · ${kindName(h.kind)} ·
+      ${h.likes == null ? L("اللايكات مخفية", "likes hidden") : L(`<b>${num(h.likes)}</b> لايك`, `<b>${num(h.likes)}</b> likes`)}، ${L(`${num(h.comments)} تعليق`, `${num(h.comments)} comments`)} ${when}</span>
+      ${h.caption ? `<div data-notr style="font-size:13.5px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(h.caption)}</div>` : ""}</div>
+    <a class="btn sm" href="${esc(h.permalink)}" target="_blank" rel="noopener" style="flex:none;text-decoration:none">${L("فتح ↗", "Open ↗")}</a></div>`;
+}
+function renderTrends(T, a) {
+  const box = $("#trends");
+  if (!box) return;
+  const manage = `<button class="btn sm" id="trendBtn">${T?.list?.length ? L("الهاشتاقات ✎", "Hashtags ✎") : L("اختار هاشتاقاتك", "Pick your hashtags")}</button>`;
+  const bind = () => {
+    $("#trendBtn")?.addEventListener("click", openTrendDialog);
+    $("#trendConnect")?.addEventListener("click", openCompDialog);
+    box.querySelectorAll("[data-ttag]").forEach((b) => b.addEventListener("click", () => { state.trendTag = b.dataset.ttag || null; renderTrends(T, a); }));
+    $("#trendAr")?.addEventListener("click", () => { state.trendAr = !ar; renderTrends(T, a); });
+  };
+  if (!T?.list?.length) {
+    box.innerHTML = `<div class="card"><p class="sub" style="margin-top:0">${L("تابع أكثر البوستات انتشار الحين في هاشتاقات مجالك، عشان تعرف وش الأفكار اللي ماشية قبل لا تنتشر عند الكل. يستخدم نفس ربط فيسبوك حق المنافسين.", "Follow the posts spreading fastest right now in your niche hashtags, so you spot the ideas that work before everyone does. Uses the same Facebook connection as competitors.")}</p>
+      ${a.is_demo ? "" : T?.connected ? manage : `<button class="btn sm" id="trendConnect">${L("اربط فيسبوك أول (من المنافسين)", "Connect Facebook first (via competitors)")}</button>`}</div>`;
+    return bind();
+  }
+  const sel = T.tags.some((t) => t.tag === state.trendTag) ? state.trendTag : null;
+  // «عربي بس»: هاشتاقات مثل #voiceover عالمية، فنخفي البوستات اللي كابشنها مو عربي (يشتغل تلقائياً لما اللوحة بالعربي)
+  const ar = state.trendAr ?? LANG !== "en";
+  const pick = (list) => list.filter((h) => (!sel || h.tags.includes(sel)) && (!ar || /[\u0600-\u06FF]/.test(h.caption)));
+  const rising = pick(T.rising).slice(0, 10), top = pick(T.top).slice(0, 10);
+  const errs = T.tags.filter((t) => t.error);
+  // كم ريل من أسرع ١٠: يبين أي شكل ماشي في مجالك الحين
+  const reels = rising.filter((h) => h.kind === "REELS").length;
+  const pending = T.tags.every((t) => t.pending);
+  box.innerHTML = `
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+      <div class="chips" style="flex-wrap:wrap">
+        <button id="trendAr" class="${ar ? "on" : ""}" title="${L("يخفي البوستات اللي كابشنها مو عربي", "Hides posts whose caption isn't in Arabic")}">${L("عربي بس", "Arabic only")}</button>
+        <button data-ttag="" class="${sel ? "" : "on"}">${L("الكل", "All")}</button>
+        ${T.tags.map((t) => `<button data-ttag="${esc(t.tag)}" class="${sel === t.tag ? "on" : ""}" title="${t.per_day == null ? "" : L(`تقريباً ${t.per_day}${t.capped ? "+" : ""} بوست جديد باليوم`, `about ${t.per_day}${t.capped ? "+" : ""} new posts a day`)}">${tagChip(t.tag)}${t.per_day == null ? "" : ` <span class="sub" style="font-size:11.5px">${num(t.per_day)}${t.capped ? "+" : ""}/${L("يوم", "day")}</span>`}${t.error ? " ⚠️" : ""}</button>`).join("")}
+      </div>
+      ${a.is_demo ? "" : manage}</div>
+    ${errs.length ? `<ul class="log" data-notr style="margin-top:0">${errs.map((t) => `<li>#${esc(t.tag)}: ${esc(t.error)}</li>`).join("")}</ul>` : ""}
+    <h3>${L("ينتشر الحين", "Spreading now")}</h3>
+    <p class="sub">${L("بوستات آخر ٧ أيام، مرتبة بسرعة التفاعل: اللايكات والتعليقات ÷ كم ساعة كان عمر البوست لما شفناه. انستجرام ما يعطي اسم صاحب البوست ولا مشاهداته، فافتحه وشوف الفكرة وأول ثانيتين.", "Posts from the last 7 days, ranked by how fast they gathered likes and comments for their age when seen. Instagram doesn't give the author or views, so open it and look at the idea and the first two seconds.")}
+      ${rising.length >= 5 ? L(` ${reels} من أسرع ${rising.length} ريلز.`, ` ${reels} of the fastest ${rising.length} are Reels.`) : ""}</p>
+    ${rising.length ? `<div class="scroll" style="max-height:420px;overflow-y:auto">${rising.map((h) => trendRow(h, true)).join("")}</div>`
+      : `<p class="sub" style="margin:0">${pending ? L("ينسحب الحين… ارجع بعد دقيقة.", "Fetching now… check back in a minute.") : L("ما فيه بوستات جديدة لهالهاشتاق آخر ٧ أيام.", "No new posts for this hashtag in the last 7 days.")}</p>`}
+    ${top.length ? `<details style="margin-top:12px"><summary><b>${L("الأقوى في آخر سنة", "Strongest in the past year")}</b> <span class="sub">${L("من «أفضل البوستات» في الهاشتاق، أغلبها أفكار تعيش", "From the hashtag's top posts, mostly evergreen ideas")}</span></summary>
+      ${top.map((h) => trendRow(h, false)).join("")}</details>` : ""}
+  </div>`;
+  bind();
+}
+function openTrendDialog() {
+  const T = state.report.trends || { list: [], max: 15, left: 30, suggested: [] };
+  const typed = trendDlg.open ? $("#trendList")?.value : null;
+  const start = T.list.length ? T.list.map((t) => "#" + t.tag) : (T.suggested || []).map((t) => "#" + t);
+  $("#trendBody").innerHTML = `
+    ${T.connected ? "" : `<div class="err" style="margin-top:0">${L("لازم تربط فيسبوك أول من «إدارة المنافسين». الهاشتاقات تنحفظ بس ما تنسحب قبل الربط.", "Connect Facebook first in “Manage competitors”. Hashtags are saved but not fetched until then.")}</div>`}
+    <label for="trendList" style="margin-top:0">${L(`الهاشتاقات (${T.max} بالكثير، كل واحد بسطر)`, `Hashtags (up to ${T.max}, one per line)`)}</label>
+    <textarea id="trendList" rows="8" dir="auto" placeholder="#">${esc(typed ?? start.join("\n"))}</textarea>
+    <p class="hint">${L(`انستجرام يسمح بـ٣٠ هاشتاق مختلف كل ٧ أيام، وباقي لك <b>${T.left}</b> هالأسبوع. اختار هاشتاقات مجالك نفسه: العامة مثل #اكسبلور و#foryou أفضل بوستاتها من حسابات عملاقة في كل المجالات وما تفيدك.`, `Instagram allows 30 different hashtags every 7 days, and you have <b>${T.left}</b> left this week. Pick hashtags from your own niche: general ones like #explore and #foryou are dominated by huge accounts in every niche and won't help.`)}</p>
+    ${T.list.length || !T.suggested?.length ? "" : `<p class="hint">${L("حطيت لك قائمة مقترحة تبدأ فيها، عدّلها براحتك.", "I've filled in a suggested list to start with. Edit it as you like.")}</p>`}`;
+  $("#trendErr").innerHTML = "";
+  if (!trendDlg.open) trendDlg.showModal();
+}
+$("#trendSave").onclick = async (ev) => {
+  ev.target.disabled = true;
+  try {
+    const T2 = await api(`/api/accounts/${encodeURIComponent(state.id)}/trends`, { method: "PUT", body: { tags: $("#trendList").value } });
+    state.report.trends = { ...state.report.trends, ...T2 };
+    trendDlg.close();
+    load({ quiet: true });
+  } catch (e) { $("#trendErr").innerHTML = `<div class="err">${esc(e.message)}</div>`; } finally { ev.target.disabled = false; }
+};
 
 function openCompDialog() {
   const C = state.report.competitors || { list: [], max: 10 };
@@ -1769,6 +1858,9 @@ function render() {
   <h2>${L("المنافسين", "Competitors")} <small>${L("أرقامهم العامة، تتحدث مرة باليوم", "Their public numbers, updated once a day")}</small></h2>
   <div id="competitors"></div>
 
+  <h2>${L("الرائج في هاشتاقاتك", "Trending in your hashtags")} <small>${L("أسرع البوستات انتشار في هاشتاقات مجالك، تتحدث كل ٤ ساعات", "The fastest-spreading posts in your niche hashtags, updated every 4 hours")}</small></h2>
+  <div id="trends"></div>
+
   <h2>أي نوع محتوى يشتغل؟</h2>
   <div class="card scroll">
     ${r.by_type.length ? `<table>
@@ -1840,6 +1932,7 @@ function render() {
   renderLeads(r.comments, a);
   renderAudience(r.audience);
   renderCompetitors(r.competitors, a);
+  renderTrends(r.trends, a);
   renderSales(r.sales);
   renderPlan(r.plan);
   renderSched(r.scheduled || [], a);

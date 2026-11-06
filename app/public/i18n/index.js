@@ -59,6 +59,9 @@ i18n({
   "ريل": "Reel",
   "الهدف: بدون تحديد": "Goal: not set",
   "إغلاق": "Close",
+  "حفظ القائمة": "Save list",
+  "المنافسين": "Competitors",
+  "هاشتاقات مجالك": "Your niche hashtags",
   "بوستات سابقة بنفس الموضوع": "Past posts on the same topic",
 
   // الجوال وتيليجرام

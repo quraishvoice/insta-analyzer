@@ -20,6 +20,7 @@ import { getDm, saveDm } from "./dm.js";
 import { getAutoDm, saveAutoDm } from "./autodm.js";
 import { exportXlsx } from "./export.js";
 import { connectCompetitors, disconnectCompetitors, setCompetitors } from "./competitors.js";
+import { setTrendTags, syncTrends } from "./trends.js";
 import { saveUpload, createScheduled, listScheduled, cancelScheduled, publishNow, runScheduler, cleanTmp } from "./schedule.js";
 import { postReviews } from "./postreview.js";
 import { botReply, botButton, sendLeadCards, morningBrief, MENU } from "./bot.js";
@@ -99,7 +100,7 @@ const routes = {
     const queued = db.prepare("SELECT id FROM scheduled WHERE account_id = ?").all(p.id).map((r) => r.id);
     db.exec("BEGIN");
     try {
-      for (const t of ["media", "daily", "stories", "comments", "sales", "snapshots", "alerts", "reply_templates", "goals", "recycle", "carousels", "dm_templates", "autodm", "audience", "tagged", "competitor_auth", "competitors", "competitor_daily", "competitor_media", "scheduled", "ideas", "experiments", "plan_days", "advice"]) db.prepare(`DELETE FROM ${t} WHERE account_id = ?`).run(p.id);
+      for (const t of ["media", "daily", "stories", "comments", "sales", "snapshots", "alerts", "reply_templates", "goals", "recycle", "carousels", "dm_templates", "autodm", "audience", "tagged", "competitor_auth", "competitors", "competitor_daily", "competitor_media", "trend_tags", "trend_searches", "trend_media", "scheduled", "ideas", "experiments", "plan_days", "advice"]) db.prepare(`DELETE FROM ${t} WHERE account_id = ?`).run(p.id);
       db.prepare("DELETE FROM accounts WHERE id = ?").run(p.id);
       db.exec("COMMIT");
     } catch (e) { db.exec("ROLLBACK"); throw e; }
@@ -150,6 +151,7 @@ const routes = {
   "POST /api/accounts/:id/competitors/connect": (p, body, _, { req }) => (macOnly(req), connectCompetitors(p.id, body.token)),
   "DELETE /api/accounts/:id/competitors/connect": (p, _, __, { req }) => (macOnly(req), disconnectCompetitors(p.id)),
   "PUT /api/accounts/:id/competitors": (p, body) => setCompetitors(p.id, body.usernames),
+  "PUT /api/accounts/:id/trends": (p, body) => setTrendTags(p.id, body.tags),
   // ملف إكسل للفترة المختارة
   "GET /api/accounts/:id/export": (p, _, q) => { validRange(q); return exportXlsx(p.id, q.get("from"), q.get("to")); },
 
@@ -379,6 +381,11 @@ const remindLeads = safe("متابعة العملاء", async () => {
 });
 setInterval(remindLeads, 10 * 60 * 1000);
 setTimeout(remindLeads, 90 * 1000);
+
+// الرائج في هاشتاقاتك: أحدث البوستات كل ٤ ساعات (الدالة نفسها تتخطى اللي انسحب قريب)
+const trends = safe("الهاشتاقات", async () => { for (const id of liveIds()) await syncTrends(id).catch((e) => console.error("الهاشتاقات:", e.message)); });
+setInterval(trends, 30 * 60 * 1000);
+setTimeout(trends, 5 * 60 * 1000);
 
 // طول الريلز (لنسبة المشاهدة): ٣٠ ريل كل ربع ساعة لين تخلص، وبعدها الجديدة بس
 const durations = safe("طول الريلز", async () => { for (const id of liveIds()) await fillDurations(id).catch((e) => console.error("طول الريلز:", e.message)); });
