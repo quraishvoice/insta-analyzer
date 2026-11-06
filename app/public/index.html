@@ -1896,7 +1896,9 @@ function render() {
     ${kpiCard("الردود", st.kpis.replies, st.prev_kpis.replies, num, "ردود على الستوري توصلك في الخاص")}
   </div>
   <div class="grid two" style="margin-top:14px">
-    <div class="card"><h3>كم يبقى معك في سلسلة اليوم؟</h3><p class="sub">وصول كل ستوري مقارنة بأول ستوري في نفس اليوم</p><div class="chart-box"><canvas id="cRetention"></canvas></div></div>
+    <div class="card"><h3>${L("وين يطيح الجمهور في سلسلة الستوري؟", "Where do viewers drop off in a story series?")}</h3><p class="sub">${st.retention?.length
+      ? L(`متوسط ${num(st.retention[0].days)} ${st.retention[0].days >= 3 && st.retention[0].days <= 10 ? "أيام" : "يوم"} نزّلت فيها أكثر من ستوري: وصول كل ستوري مقارنة بأول ستوري في نفس اليوم (مو ستوري اليوم بس)`, `Average of ${num(st.retention[0].days)} days with more than one story: each story's reach vs. the first one that day (not just today)`)
+      : L("متوسط الأيام اللي نزّلت فيها أكثر من ستوري: وصول كل ستوري مقارنة بأول ستوري في نفس اليوم", "Average of days with more than one story: each story's reach vs. the first one that day")}</p><div class="chart-box"><canvas id="cRetention"></canvas></div></div>
     <div class="card"><h3>${L("الستوري الشغالة الحين", "Live stories")}</h3><p class="sub">${L("اللي ما مر عليها ٢٤ ساعة، وأرقامها تتحدث كل دقيقتين. لما تنتهي تنتقل للسابقة", "Under 24 hours old, numbers update every 2 minutes. Once they expire they move to past stories")}</p>
       ${st.list.some((x) => x.live) ? `<div class="grid posts stories">${st.list.filter((x) => x.live).map(storyCard).join("")}</div>` : `<p class="sub" style="margin:0">${L("ما فيه ستوري شغالة الحين.", "No live stories right now.")}</p>`}
       ${st.list.some((x) => !x.live) ? `<details style="margin-top:12px"><summary class="sub" style="cursor:pointer">${L("الستوري السابقة (الأحدث أول)", "Past stories (newest first)")}</summary>
