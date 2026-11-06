@@ -2064,11 +2064,13 @@ const bar3d = {
         const { x, y, base, width } = b.getProps(["x", "y", "base", "width"], false);
         if (!width || y === base) return;
         const c = Array.isArray(ds._c3d) ? ds._c3d[j] : ds._c3d;
-        const d = Math.min(9, width * 0.38), l = x - width / 2, rt = x + width / 2, top = Math.min(y, base), bot = Math.max(y, base);
+        // العمود اللي يتعدى حد المحور ينقص عند حافة الرسم، فالجانب والوجه العلوي ينقصون معه
+        const area = chart.chartArea, cut = Math.min(y, base) < area.top;
+        const d = Math.min(9, width * 0.38), l = x - width / 2, rt = x + width / 2, top = Math.max(Math.min(y, base), area.top), bot = Math.min(Math.max(y, base), area.bottom);
         ctx.save();
         ctx.fillStyle = shade(c, -0.5); // الوجه الجانبي
         ctx.beginPath(); ctx.moveTo(rt, top); ctx.lineTo(rt + d, top - d); ctx.lineTo(rt + d, bot - d); ctx.lineTo(rt, bot); ctx.fill();
-        if (y < base) { // الوجه العلوي (للأعمدة اللي فوق الصفر)
+        if (y < base && !cut) { // الوجه العلوي (للأعمدة اللي فوق الصفر)
           ctx.fillStyle = shade(c, 0.3);
           ctx.beginPath(); ctx.moveTo(l, top); ctx.lineTo(l + d, top - d); ctx.lineTo(rt + d, top - d); ctx.lineTo(rt, top); ctx.fill();
         }
@@ -2189,7 +2191,9 @@ function drawCharts(r) {
       state.charts.push(mkChart($("#cRetention"), {
         type: "bar",
         data: { labels: ret.map((p) => L(`ستوري ${p.position}`, `Story ${p.position}`)), datasets: [{ label: L("يبقى معك", "Retained"), data: ret.map((p) => Math.round(p.kept * 100)), backgroundColor: ret.map((p) => (p.kept >= 0.6 ? accent : css("--seq-1"))), borderRadius: { topLeft: 4, topRight: 4 }, maxBarThickness: 36 }] },
-        options: { ...base, plugins: { ...base.plugins, tooltip: { ...base.plugins.tooltip, callbacks: { label: (c) => L(`يبقى ${c.raw}٪ (من ${ret[c.dataIndex].days} يوم)`, `${c.raw}% stay (over ${ret[c.dataIndex].days} ${plural(ret[c.dataIndex].days, "day", "days")})`) } } }, scales: { ...base.scales, y: { ...base.scales.y, max: 100, ticks: { callback: (v) => v + PCT } } } },
+        options: { ...base, plugins: { ...base.plugins, tooltip: { ...base.plugins.tooltip, callbacks: { label: (c) => { const n = ret[c.dataIndex].days, days = L(`${n} ${n >= 3 && n <= 10 ? "أيام" : "يوم"}`, `${n} ${plural(n, "day", "days")}`);
+          // فوق ١٠٠٪: الستوري هذي وصلت ناس أكثر من أول ستوري
+          return c.raw > 100 ? L(`وصلت ${c.raw}٪ من وصول أول ستوري (متوسط ${days})`, `Reached ${c.raw}% of the first story's reach (over ${days})`) : L(`يبقى ${c.raw}٪ (متوسط ${days})`, `${c.raw}% stay (over ${days})`); } } } }, scales: { ...base.scales, y: { ...base.scales.y, suggestedMax: 100, ticks: { callback: (v) => v + PCT } } } },
       }));
     } else if ($("#cRetention")) $("#cRetention").parentElement.innerHTML = `<p class="sub">يحتاج يومين على الأقل فيهم أكثر من ستوري.</p>`;
   }
